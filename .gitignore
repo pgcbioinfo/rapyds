@@ -1,0 +1,8 @@
+data/*
+bwa/
+reads/
+reads_archive/
+report/
+__pycache__/
+output/
+bwa-oysters/

@@ -1,0 +1,4 @@
+EcoRI ApeKI
+EcoRI MspI
+ApeKI BfaI
+MspI BfaI
