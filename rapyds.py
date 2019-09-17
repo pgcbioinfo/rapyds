@@ -454,7 +454,7 @@ def run_RE(enzyme):
 
 		## running of bwa shell script
 		#print("%s %s %s"%(args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name))
-		if(args.bwaskip != None):
+		if(args.bwaskip != True):
 			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name, args.bwa)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			shellscript.wait()
 		#print(shellscript.communicate())
@@ -597,8 +597,8 @@ if __name__ == '__main__':
 	parser.add_argument('-o', nargs='?', default='report', help='output file name')
 	parser.add_argument('-t', nargs='?', default='16', help='number of processes (default 4)')
 	parser.add_argument('-bwa', help='clean BWA files after running')
-	parser.add_argument('--clean', help='clean files after running')
-	parser.add_argument('--bwaskip', help='Skip bwa indexing')
+	parser.add_argument('--clean', help='clean files after running', action='store_true')
+	parser.add_argument('--bwaskip', help='Skip bwa indexing', action='store_true')
 
 	args = parser.parse_args()
 
@@ -673,7 +673,7 @@ if __name__ == '__main__':
 			input_i  = open(args.i, "r+")
 			input_i.close()
 
-			if(args.bwaskip != None):
+			if(args.bwaskip != True):
 				if(args.bwa == None):
 					args.bwa = "bwa"
 					if(os.path.exists(args.bwa)):
@@ -682,7 +682,7 @@ if __name__ == '__main__':
 				shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (args.i, args.i.split("/")[-1], args.bwa)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			genome = parse_input(args.i)
 			#print("BWA Index")
-			if(args.bwaskip != None):
+			if(args.bwaskip != True):
 				shellscript.wait()			
 		except (OSError, IOError) as e:
 			print("Sequence file "+args.i+" is invalid or not found")
@@ -720,7 +720,7 @@ if __name__ == '__main__':
 	create_html.create_report("report/"+args.o)
 
 	# clean up folders created
-	if(args.clean != None):
+	if(args.clean):
 		if(os.path.exists("reads") == True):
 			shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
 			## These lines 708 up to 710 are specific to analysis for G. aculateus
