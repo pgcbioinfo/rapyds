@@ -452,27 +452,27 @@ def run_RE(enzyme):
 		output.close()
 		output2.close()
 
+		unique_repeats = 0
+		uniq_count = 0
+		rept_count = 0		
 		## running of bwa shell script
 		#print("%s %s %s"%(args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name))
 		if(args.bwaskip != True):
 			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name, args.bwa)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			shellscript.wait()
-		#print(shellscript.communicate())
-		#for line in shellscript.communicate():
-		#	print(line)
-		unique_repeats = 0
-		uniq_count = 0
-		rept_count = 0		
-		## analysing the routput of BWA
-		try:
-			# ctr = unique_repeats, unique = uniq_count, repeat = rept_count 
-			unique_repeats,uniq_count,rept_count = remove_repeat.remove_XAs(enzyme.replace(' ', '-'), genome_name,args.bwa)
-		except:
-			global pool
-			pool.close()
-			pool.terminate()
-			raise Exception("Close")
-			raise SystemExit
+			#print(shellscript.communicate())
+			#for line in shellscript.communicate():
+			#	print(line)
+			## analysing the routput of BWA
+			try:
+				# ctr = unique_repeats, unique = uniq_count, repeat = rept_count 
+				unique_repeats,uniq_count,rept_count = remove_repeat.remove_XAs(enzyme.replace(' ', '-'), genome_name,args.bwa)
+			except:
+				global pool
+				pool.close()
+				pool.terminate()
+				raise Exception("Close")
+				raise SystemExit
 
 		results.write(str(uniq_count)+"\t"+str(rept_count)+"\t"+str(unique_repeats)+"\t")
 
