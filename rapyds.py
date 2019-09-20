@@ -369,7 +369,7 @@ def write_csv(genome_name, fragments, enzyme, len_genome):
 		function writes the enzyme and its digested fragments' length in a csv file
 	"""
 	# try:
-	csv_file = open("output/csv_"+genome_name+".csv", "w+")
+	csv_file = open("output/csv_"+genome_name+".csv", "a+")
 	csv_file.write(enzyme)
 	csv_file.write("\t")
 	length = [str(len(row[0])) for row in fragments]

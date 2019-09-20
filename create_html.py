@@ -131,11 +131,12 @@ def create_gel_html():
 	file_html.write(footer)
 	file_html.close()
 
-def create_cutsite():
+def create_html_files():
 	"""
 		function that creates the cutsite.html file
 	"""
 	shutil.copyfile('templates/cutsite.html', 'cutsite.html')
+	shutil.copyfile('templates/density.html', 'density.html')
 
 
 def create_report(output_name):
@@ -145,7 +146,7 @@ def create_report(output_name):
 	## call the functions to create the html files
 	create_overview()
 	create_gel_html()
-	create_cutsite()
+	create_html_files()
 
 	## create output directory
 	if(os.path.exists(output_name) == True):
@@ -160,6 +161,7 @@ def create_report(output_name):
 	shutil.move('index.html', output_name)
 	shutil.move('gel.html', output_name)
 	shutil.move('cutsite.html', output_name)
+	shutil.move('density.html', output_name)
 
 	shutil.copytree('output', output_name+'/output/')
 	shutil.copytree('src', output_name+'/src')

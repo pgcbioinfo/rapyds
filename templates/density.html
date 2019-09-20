@@ -77,6 +77,7 @@
     <div> <button onclick="myFunction()">Reload Page</button> </div>
 
         <div class="sixteen wide column" id="try">
+          <div id="density_viz"></div>
         </div>
         
       </div>
@@ -161,13 +162,13 @@ d3.text("output/RE.txt").then(function(text) {
   $('#mySelect').val(selectedItem);
 
   enzyme = selectedItem
-  hist_plot(gen_name, enzyme)
+  dens_plot(gen_name, enzyme)
 
   
   $('#mySelect').change(function() { 
       var dropVal = $(this).val();
       sessionStorage.setItem("SelectedItem", dropVal);
-      hist_plot(gen_name, dropVal)
+      dens_plot(gen_name, dropVal)
 
      
   });
@@ -178,107 +179,79 @@ d3.text("output/RE.txt").then(function(text) {
 
 
 
-let hist_plot = function(name, enzyme){
+let dens_plot = function(name, enzyme){
 
-d3.json("output/cut"+name+".json").then(function(data){
-  console.log("ok")
+  d3.json("output/cut"+name+".json").then(function(data) {
 
-  var index = data[enzyme]
-  var cut_sites = index.length - 1
+    var index = data[enzyme];
 
-
-  var formatCount = d3.format(",.0f");
-  var barWidth = 0.5;
-  var margin = {top: 25, right: 30, bottom: 30, left: 30},
-    width = 960 - margin.left - margin.right,
-    height = 150 - margin.top - margin.bottom;
-
-  var x = d3.scaleLinear()
-    .domain([0, index[0]])
-    .range([0, width]);
-
-  var xAxis = d3.axisBottom()
-    .scale(x)
-    .orient("bottom")
-    .tickSize(-1, 0)
-    .tickPadding(6); 
-
-  var zoom = d3.behavior.zoom()
-    .x(x)
-    .scaleExtent([1, 50])
-    .on("zoom", zoomed);
-
-
-
-  var svg = d3.select("#try").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("svg:g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-    .call(zoom)
+    var genome_len = index[0];
+    index.shift();
     
-    index.shift()
-    var bar = svg.selectAll(".bar")
-      .data(index)
-      .enter().append("g")
-      .attr("class", "bar")
-      .attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
+    var formatCount = d3.format(",.0f");
     
-    
-  bar.append("rect")
-      .attr("x", -barWidth/2)
-      .attr("width", barWidth )
-      .attr("height", 90)
-      .style("opacity", 0.2);
-      
 
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
+    // set the dimensions and margins of the graph
+    var margin = {top: 20, right: 20, bottom: 30, left: 40},
+        width = 960 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
 
-  svg.append("svg:rect")
-    .attr("class", "pane")
-    .attr("width", width)
-    .attr("height", height)
-   
-
-  svg.append("text")             
-      .attr("transform",
-            "translate(" + (width/2) + " ," + 
-                           (height + margin.top + 0) + ")")
-      .style("text-anchor", "middle")
-      .text("Length of Genome");
-
-   svg.append("text")             
-      .attr("transform",
-            "translate(" + (width/2) + " ," + 
-                           (height + margin.top + -130) + ")")
-      .style("text-anchor", "middle")
-      .style("font-size", "20px")
-      .text(enzyme+"    ("+cut_sites+" cut sites)");
-
-  svg.append("text")             
-      .attr("transform",
-            "translate(" + (width/2) + " ," + 
-                           -10 + ")")
-      .style("text-anchor", "middle")
-      .style("font-size", "20px")
-      .text(enzyme+"    ("+cut_sites+" cut sites)");
+    // append the svg object to the body of the page
+    var svg = d3.select("#density_viz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
 
 
-  function zoomed() {
+    // X axis: scale and draw
+    var x = d3.scaleLinear()
+        .domain([0, genome_len])
+             // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
+        .range([0, width]);
 
-  let e = d3.event;
-  let tx = Math.min(0, Math.max(e.translate[0], width - width*e.scale));
-  let ty = Math.min(0, Math.max(e.translate[1], height - height*e.scale));
-  zoom.translate([tx,ty]);
+    bin_size = x.ticks(20)[1]
+    bin_count = x.ticks(20).length
+    x = d3.scaleLinear()
+        .domain([0,bin_count*bin_size])
+             // can use this instead of 1000 to have the max of data: d3.max(data, function(d) { return +d.price })
+        .range([0, width]);
 
-  svg.select(".x.axis").call(xAxis);
-  bar.attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
-  }
+    // set the parameters for the histogram
+    var histogram = d3.histogram()
+        .value(function(index) { return index; })
+        .domain(x.domain())  // then the domain of the graphic
+        .thresholds(x.ticks(20)); // then the numbers of bins
 
-});
+    // And apply this function to data to get the bins
+    var bins = histogram(index);
+
+    // Y axis: scale and draw:
+    var y = d3.scaleLinear()
+        .range([height, 0]);
+        y.domain([0, d3.max(bins, function(index) { return index.length; })]);   // d3.hist has to be called before the Y axis obviously
+    svg.append("g")
+        .call(d3.axisLeft(y));
+
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+    // append the bar rectangles to the svg element
+    svg.selectAll("rect")
+        .data(bins)
+        .enter()
+        .append("rect")
+          .attr("x", 1)
+          .attr("transform", function(d) { return "translate(" + x(d.x0) + "," + y(d.length) + ")"; })
+          .attr("width", function(d) { return x(d.x1) - x(d.x0) -1 ; })
+          .attr("height", function(d) { return height - y(d.length); })
+          .style("fill", "#69b3a2")
+
+  });
+
 
 }
 
