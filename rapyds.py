@@ -12,7 +12,7 @@ from __future__ import print_function, with_statement
 import argparse, re, copy, operator, importlib
 import sys, time, os, shutil, subprocess
 import numpy as np
-import remove_repeat, tojson, create_html
+import remove_repeat, tojson, create_html,create_histogram
 from multiprocessing import Pool, Process, Lock
 from multiprocessing.pool import ThreadPool
 pool = Pool(32)
@@ -681,7 +681,6 @@ if __name__ == '__main__':
 					os.makedirs(args.bwa)
 				shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (args.i, args.i.split("/")[-1], args.bwa)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			genome = parse_input(args.i)
-			#print("BWA Index")
 			if(args.bwaskip != True):
 				shellscript.wait()			
 		except (OSError, IOError) as e:
@@ -716,8 +715,12 @@ if __name__ == '__main__':
 
 
 	## creating output files
+	importlib.import_module("create_histogram")
+	create_histogram.create_histograms(20,"output","output")
+
 	importlib.import_module("create_html")
 	create_html.create_report("report/"+args.o)
+
 
 	# clean up folders created
 	if(args.clean):

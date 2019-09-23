@@ -1,0 +1,201 @@
+<html>
+<meta charset="utf-8">
+<head>
+  <script src="src/jquery.min.js"></script>
+  <script src="src/jquery.dataTables.min.js"></script>
+  <script src="src/semantic.min.js"></script>
+  <script src="src/d3.min.js"></script>
+  <script src="src/d3-electrophoresis.js"></script>
+  <link rel="stylesheet" type="text/css" href="src/semantic.min.css">
+  <link rel="stylesheet" type="text/css" href="src/dataTables.semanticui.min.css">
+
+  <style type="text/css">
+  body {
+    background-color: #FFFFFF;
+  }
+  .ui.menu .item {
+    margin-right: 1.5em;
+  }
+  .main.container {
+    margin-top: 7em;
+  }
+  input .three_fields{
+    margin: 0 10px;
+  }
+  bar rect {
+  fill: black;
+  shape-rendering: crispEdges;
+  }
+
+  .axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+
+  svg {
+    font-size: 12px;
+    position: relative;
+    margin-top: 50px;
+    margin-bottom: 50px;
+    
+    }
+
+    g {
+    overflow: visible;
+    }
+
+   text {
+    z-index: 20;
+  }
+
+  rect.pane {
+    cursor: move;
+    fill: none;
+    pointer-events: all;
+  }
+  </style>
+
+</head>
+<body>
+
+  <div class="ui fixed inverted menu">
+    <div class="ui container">
+      <div class="header item">
+        RApyDS Report
+      </div>
+      <a href="index.html" class="item">Overview</a>
+      <a href="gel.html" class="item">Electrophoresis</a>
+      <a href="cutsite.html" class="item">Cut Site Distribution</a>
+    </div>
+  </div>
+  <div class="ui main container">
+    <div class="ui grid">
+    
+      <div id="sequence" class="center">Sequence: </div>
+    <div id="re" class ="center2">Enzyme: </div>
+    <div> <button onclick="myFunction()">Reload Page</button> </div>
+
+        <div class="sixteen wide column" id="try">
+          <div id="density_viz"></div>
+        </div>
+        
+      </div>
+    </div>
+
+
+<script type="text/javascript">
+
+   
+function myFunction() {
+    location.reload();
+}
+
+var gen_name;
+var enzyme;
+
+var sequences_list = [];
+var enzyme_list = [];
+
+d3.text("output/genome_names.txt").then(function(text) {
+
+  var seq = document.getElementById("sequence");
+
+
+  // array to be added
+  var data = text.split('\n')
+  var data_len = data.length - 1
+  
+  //Create and append select list
+  var selectList = document.createElement("select");
+  selectList.setAttribute("id", "mySelect2");
+  seq.appendChild(selectList);
+
+ //Create and append the options
+  for (var i = 0; i < data.length; i++) {
+      var option = document.createElement("option");
+      option.setAttribute("value", data[i]);
+      option.text = data[i];
+      selectList.appendChild(option);
+      if(data[i].length > 0){
+        sequences_list.push(data[i].split(' ')[0]);
+      }
+  }
+
+
+
+  var selectedItem2 = sessionStorage.getItem("SelectedItem");  
+  $('#mySelect2').val(selectedItem2);
+  
+  var name = selectedItem2.split(' ')
+  gen_name = name[0]
+
+
+  $('#mySelect2').change(function() { 
+      var dropVal2 = $(this).val();
+      sessionStorage.setItem("SelectedItem", dropVal2);
+      location.reload();
+  });
+
+});
+
+
+d3.text("output/RE.txt").then(function(text) {
+
+
+  var re = document.getElementById("re");
+
+  // array to be added
+  var data = text.split('\n')
+  var data_len = data.length - 1
+  
+  //Create and append select list
+  var selectList = document.createElement("select");
+  selectList.setAttribute("id", "mySelect");
+  re.appendChild(selectList);
+
+ //Create and append the options
+  for (var i = 0; i < data.length; i++) {
+    var option = document.createElement("option");
+    option.setAttribute("value", data[i]);
+    option.text = data[i];
+    selectList.appendChild(option);
+    enzyme_list.push(data[i]);
+  }
+
+
+  var selectedItem = sessionStorage.getItem("SelectedItem");  
+  $('#mySelect').val(selectedItem);
+
+  enzyme = selectedItem
+  dens_plot(gen_name, enzyme)
+
+  
+  $('#mySelect').change(function() { 
+      var dropVal = $(this).val();
+      sessionStorage.setItem("SelectedItem", dropVal);
+      dens_plot(gen_name, dropVal)
+
+     
+  });
+
+})
+
+
+
+
+
+let dens_plot = function(name, enzyme){
+  console.log("name "+name)
+  console.log("enzyme "+enzyme)
+ if(sequences_list.includes(name) && enzyme_list.includes(enzyme)){
+   var elem_img = document.createElement("img");
+   elem_img.src = "output/images/"+name+"_"+enzyme+".png"
+   document.getElementById("density_viz").appendChild(elem_img)
+ }
+
+}
+
+  </script>
+  </body>
+</html>

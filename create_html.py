@@ -137,6 +137,7 @@ def create_html_files():
 	"""
 	shutil.copyfile('templates/cutsite.html', 'cutsite.html')
 	shutil.copyfile('templates/density.html', 'density.html')
+	shutil.copyfile('templates/density2.html', 'density2.html')
 
 
 def create_report(output_name):
@@ -162,17 +163,11 @@ def create_report(output_name):
 	shutil.move('gel.html', output_name)
 	shutil.move('cutsite.html', output_name)
 	shutil.move('density.html', output_name)
+	shutil.move('density2.html', output_name)
 
 	shutil.copytree('output', output_name+'/output/')
+	# shutil.copytree('output/images', output_name+'/output/images/')
 	shutil.copytree('src', output_name+'/src')
-	# try:
-	# 	shutil.copytree('output', output_name+'/output/')
-	# except:
-	# 	print
-	# try:
-	# 	shutil.copytree('src', output_name+'/src')
-	# except:
-	# 	pass
 
 	## make the zip file then do cleanup
 	
