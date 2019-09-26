@@ -16,15 +16,18 @@ import matplotlib.pyplot as plt
 import json
 import os.path
 
-def create_histogram_image(bins,output_path,enzyme,sequence,input_json):
+def create_histogram_image(xbins,output_path,enzyme,sequence,input_json, seq_name):
 	with open(input_json) as jsonfile:
 		data = json.load(jsonfile)
-		cut_sites = data[enzyme]
-		num_bins = bins
+		seq_len = data[enzyme][0]
+		cut_sites = data[enzyme][1:]
+		num_bins = np.arange(0,seq_len+1,float(seq_len)/xbins)
 		fig1, fig = plt.subplots()
 		n, bins, patches = fig.hist(cut_sites, num_bins, facecolor='blue', alpha=0.5,  edgecolor='black', linewidth=0.75)
 		fig.set_xticks(bins[::5])
-		plt.xlabel(enzyme)
+		plt.xlabel("Base Pairs")
+		plt.ylabel("Number of Loci")
+		plt.title(seq_name+" - "+enzyme)
 		plt.savefig(output_path+'/'+sequence+"_"+enzyme+'.png')
 
 def create_histograms(bins,output_dir,input_path):
@@ -55,7 +58,7 @@ def create_histograms(bins,output_dir,input_path):
 
 			for enzyme in renzymes:
 				jsonfile = input_path+"/cut"+sequence_name+".json"
-				create_histogram_image(20,output_dir+"/images/",enzyme,sequence_name,jsonfile)
+				create_histogram_image(bins,output_dir+"/images/",enzyme,sequence_name,jsonfile,line)
 
 
 # create_histogram_image(20,'output',sys.argv[2], sys.argv[1])

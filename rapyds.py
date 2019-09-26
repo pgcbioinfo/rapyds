@@ -59,19 +59,21 @@ def generate_gc(gc_freq, genome_size):
 	output.close()
 
 
-def digest(genome, p5, p3):
+def digest(genome, p5, p3,start):
 	"""
 		simulates the digestion process of the restriction enzymes.
 		It cuts the given genome sequence with the also given p5 and p3 sites then returns a list of fragments.
 	"""
 	fragments = re.split(p5+p3, genome)		## split the genome into fragments
 
-	curr_len = 0				## temporary holder for current base in genome
+	index = 0
+	curr_len = start				## temporary holder for current base in genome
 	new_fragments = []			## temporary list holder for digested fragments
 	## Adding the hanging part
 	for i in range(0,len(fragments)-1):
 		temp_frag = []			## temporary list holder for current fragment
 		temp_start = curr_len	## take note of curr_len, it will be the start location of the fragment
+		index += len(fragments[i])
 		curr_len += len(fragments[i])
 
 		temp_p5 = copy.copy(p5)
@@ -79,14 +81,15 @@ def digest(genome, p5, p3):
 
 		## Add the 5' part
 		if any(base in "[]" for base in temp_p5):
-			temp_p5 = re.sub("\[.*?\]", genome[curr_len+temp_p5.find('[')], temp_p5)
+			temp_p5 = re.sub("\[.*?\]", genome[index+temp_p5.find('[')], temp_p5)
 			# print(temp_p5)
 		fragments[i] = fragments[i]+temp_p5
+		index += len(temp_p5)
 		curr_len += len(temp_p5)
 
 		## Add the 3' part
 		if any(base in "[]" for base in temp_p3):
-			temp_p3 = re.sub("\[.*?\]", genome[curr_len+temp_p3.find('[')], temp_p3)
+			temp_p3 = re.sub("\[.*?\]", genome[index+temp_p3.find('[')], temp_p3)
 		fragments[i+1] = temp_p3+fragments[i+1]
 		temp_frag.append(fragments[i])
 		temp_frag.append(temp_start)
@@ -94,12 +97,17 @@ def digest(genome, p5, p3):
 		new_fragments.append(temp_frag)
 
 	## append last fragment to list
-	len_genome = len(genome)
+	len_genome = start + len(genome)
 	temp_frag = []
 	temp_frag.append(fragments[len(fragments)-1])
 	temp_frag.append(len_genome-len(fragments[len(fragments)-1]))
 	temp_frag.append(len_genome-1)
 	new_fragments.append(temp_frag)
+
+	# per item in new_fragments
+	# [0] fragment sequence
+	# [1] fragment start location (in bp)
+	# [2] fragment end location (in bp)
 	return new_fragments
 
 def cov_sel (fragments, len_genome):
@@ -141,6 +149,8 @@ def shear_frag(fragments, shear_len):
 		temp_shear.append(temp_end)		## fragment end
 		sheared_fragments.append(temp_shear)	## append sheared fragment
 
+		# clear temp_shear for new fragment
+		temp_shear = []
 		temp_frag_end = frag[0][-shear_len:]
 		temp_start = frag[1]+(frag_size-shear_len)
 
@@ -161,10 +171,11 @@ def dd_digest(genome_frag, p5_2, p3_2, p5, p3):
 	"""
 	dd_sites = 0
 	dd_fragments = [];
-	for i in range(0,len(genome_frag)):
-		dd_frag = digest(genome_frag[i], p5_2, p3_2)
-		dd_sites += len(dd_frag)
+	for frag in genome_frag:
+		dd_frag = digest(frag[0], p5_2, p3_2,frag[1])
 		dd_fragments.extend(dd_frag)
+		if frag[1] == genome_frag[1][1]:
+			print([item[1] for item in dd_fragments])
 
 	## filter fragments AB+BA
 	dd_filt_fragments = []
@@ -407,14 +418,14 @@ def run_RE(enzyme):
 		else:
 			p5,p3 = restriction_sites(enzyme,parsed['db'])
 
-		fragments = digest(genome, p5, p3)
+		fragments = digest(genome, p5, p3,0)
 		results.write(str(len(fragments))+"\t")
 		## if double digest
 		frag_select = []
 		if args.p == 'ddrad':
 			p5_2, p3_2 = restriction_sites(enzyme2,parsed['db'])
-			dig_frag = [item[0] for item in fragments]
-			fragments = dd_digest(dig_frag,p5_2,p3_2,p5,p3)
+			# dig_frag = [item[0] for item in fragments]
+			fragments = dd_digest(fragments,p5_2,p3_2,p5,p3)
 			frag_select = select_size(fragments,int(args.min), int(args.max),args.p)
 
 		## if single digest, shear fragments
