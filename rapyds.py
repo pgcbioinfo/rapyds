@@ -12,7 +12,7 @@ from __future__ import print_function, with_statement
 import argparse, re, copy, operator, importlib
 import sys, time, os, shutil, subprocess
 import numpy as np
-import remove_repeat, tojson, create_html,create_histogram
+import remove_repeat, tojson, create_html
 from multiprocessing import Pool, Process, Lock
 from multiprocessing.pool import ThreadPool
 pool = Pool(32)
@@ -174,14 +174,15 @@ def dd_digest(genome_frag, p5_2, p3_2, p5, p3):
 	for frag in genome_frag:
 		dd_frag = digest(frag[0], p5_2, p3_2,frag[1])
 		dd_fragments.extend(dd_frag)
-		if frag[1] == genome_frag[1][1]:
-			print([item[1] for item in dd_fragments])
 
 	## filter fragments AB+BA
 	dd_filt_fragments = []
 	for frag in dd_fragments:
-		if (frag[0].startswith(p3_2) and frag[0].endswith(p5)) or (frag[0].startswith(p3) and frag[0].endswith(p5_2) or (frag[0].startswith(p5_2) and frag[0].endswith(p3)) or (frag[0].startswith(p5) and frag[0].endswith(p3_2))):
+		N = "[GCTA]*"
+		combi = [p5+N+p3_2+"$", p5_2+N+p3+"$", p3+N+p5_2+"$", p3_2+N+p5+"$"]
+		if(re.match(combi[0],frag[0]) or re.match(combi[1],frag[0]) or re.match(combi[2],frag[0]) or re.match(combi[3],frag[0])):
 			dd_filt_fragments.append(frag)
+
 
 	return dd_filt_fragments
 
@@ -726,8 +727,8 @@ if __name__ == '__main__':
 
 
 	## creating output files
-	importlib.import_module("create_histogram")
-	create_histogram.create_histograms(20,"output","output")
+	# importlib.import_module("create_histogram")
+	# create_histogram.create_histograms(20,"output","output")
 
 	importlib.import_module("create_html")
 	create_html.create_report("report/"+args.o)
