@@ -64,6 +64,11 @@ def digest(genome, p5, p3, start):
 		simulates the digestion process of the restriction enzymes.
 		It cuts the given genome sequence with the also given p5 and p3 sites then returns a list of fragments.
 	"""
+	global parsed
+	p5_orig = copy.copy(p5)
+	p3_orig = copy.copy(p3)
+	p5 = restriction_sites(p5, parsed['db'])
+	p3 = restriction_sites(p3, parsed['db'])
 	fragments = re.split(p5+p3, genome)		## split the genome into fragments
 
 	index = 0
@@ -76,24 +81,36 @@ def digest(genome, p5, p3, start):
 		index += len(fragments[i])
 		curr_len += len(fragments[i])
 
-		temp_p5 = copy.copy(p5)
-		temp_p3 = copy.copy(p3)
+		temp_p5 = copy.copy(p5_orig)
+		temp_p3 = copy.copy(p3_orig)
 
 		## Add the 5' part
-		if any(base in "[]" for base in temp_p5):
-			temp_p5 = re.sub("\[.*?\]", genome[index+temp_p5.find('[')], temp_p5)
+		p5_replace = [m.start() for m in re.finditer('[NMRWYSKHBVD]', p5_orig)]
+		# print(p3_replace)
+		for replace_index in p5_replace:
+			temp_p5 = temp_p5[:replace_index] + genome[index+replace_index] + temp_p5[replace_index+1:]
+
+		# if any(base in "[]" for base in temp_p5):
+		# 	temp_p5 = re.sub("\[.*?\]", genome[index+temp_p5.find('[')], temp_p5)
 			# print(temp_p5)
 		fragments[i] = fragments[i]+temp_p5
 		index += len(temp_p5)
 		curr_len += len(temp_p5)
 
 		## Add the 3' part
-		if any(base in "[]" for base in temp_p3):
-			temp_p3 = re.sub("\[.*?\]", genome[index+temp_p3.find('[')], temp_p3)
+		p3_replace = [m.start() for m in re.finditer('[NMRWYSKHBVD]', p3_orig)]
+		# print(p3_replace)
+		for replace_index in p3_replace:
+			temp_p3 = temp_p3[:replace_index] + genome[index+replace_index] + temp_p3[replace_index+1:]
+		# print(temp_p3)
+		# if any(base in "[]" for base in temp_p3):
+		# 	print(temp_p3)
+		# 	temp_p3 = re.sub("\[.*?\]", genome[index+temp_p3.find('[')], temp_p3)
+		# 	print(temp_p3)
 		fragments[i+1] = temp_p3+fragments[i+1]
 		temp_frag.append(fragments[i])
 		temp_frag.append(temp_start)
-		temp_frag.append(temp_start+len(fragments[i]))
+		temp_frag.append(curr_len-1)
 		new_fragments.append(temp_frag)
 
 	## append last fragment to list
@@ -241,7 +258,7 @@ def parse_enzymedb(enzyme_db_file):
 	return list_enzymes
 
 
-def parse_REinput(input_RE_file):
+def parse_REinput(input_RE_file, list_enzymes):
 	"""
 	function to parse the enzyme input file. Returns list of restriction enzyme's names
 	format:	each enzyme in separate lines
@@ -252,38 +269,51 @@ def parse_REinput(input_RE_file):
 	REs = []
 	for line in input_RE:
 		enz = line.strip()
-		REs.append(enz)
+
+		if(len(enz.split()) == 1):
+			try:	## test if the RE is in loaded DB, raise an error if not in loaded DB
+				match_enzyme = list_enzymes[enz]
+				REs.append(enz)
+			except:
+				print("Restriction enzyme "+enz+" is not in database")
+				raise SystemExit
+		else:
+			enz1, enz2 = enz.split()
+			try:	## test if the RE is in loaded DB, raise an error if not in loaded DB
+				match_enzyme = list_enzymes[enz1]
+			except:
+				print("Restriction enzyme "+enz1+" is not in database")
+				raise SystemExit
+			try:
+				match_enzyme = list_enzymes[enz2]
+			except:
+				print("Restriction enzyme "+enz2+" is not in database")
+				raise SystemExit
+			REs.append(enz)
+		
 	return REs
 
-def restriction_sites(enzyme, list_enzymes):
+def restriction_sites(enzyme_part, list_enzymes):
 	"""
 		function that parses the restriction site. Gets the RE site given the RE's name and replaces any wildcard base.
 		Returns RE sites p5 and p3 in regex format
 	"""
 
-	try:	## test if the RE is in loaded DB, raise an error if not in loaded DB
-		match_enzyme = list_enzymes[enzyme]
-	except:
-		print("Restriction enzyme "+enzyme+" is not in database")
-		raise SystemExit
-
 	## replace wildcard bases
-	if any(base in "NMRWYSKHBVD" for base in match_enzyme):
-		match_enzyme = match_enzyme.replace("N", "[GCAT]")
-		match_enzyme = match_enzyme.replace("M", "[CA]")
-		match_enzyme = match_enzyme.replace("R", "[GA]")
-		match_enzyme = match_enzyme.replace("W", "[AT]")
-		match_enzyme = match_enzyme.replace("Y", "[CT]")
-		match_enzyme = match_enzyme.replace("S", "[GC]")
-		match_enzyme = match_enzyme.replace("K", "[GT]")
-		match_enzyme = match_enzyme.replace("H", "[CAT]")
-		match_enzyme = match_enzyme.replace("B", "[GCT]")
-		match_enzyme = match_enzyme.replace("V", "[GCA]")
-		match_enzyme = match_enzyme.replace("D", "[GAT]")
+	if any(base in "NMRWYSKHBVD" for base in enzyme_part):
+		enzyme_part = enzyme_part.replace("N", "[GCAT]")
+		enzyme_part = enzyme_part.replace("M", "[CA]")
+		enzyme_part = enzyme_part.replace("R", "[GA]")
+		enzyme_part = enzyme_part.replace("W", "[AT]")
+		enzyme_part = enzyme_part.replace("Y", "[CT]")
+		enzyme_part = enzyme_part.replace("S", "[GC]")
+		enzyme_part = enzyme_part.replace("K", "[GT]")
+		enzyme_part = enzyme_part.replace("H", "[CAT]")
+		enzyme_part = enzyme_part.replace("B", "[GCT]")
+		enzyme_part = enzyme_part.replace("V", "[GCA]")
+		enzyme_part = enzyme_part.replace("D", "[GAT]")
 	
-	## split into p5 and p3
-	site_p5, site_p3 = match_enzyme.split('|')
-	return site_p5,site_p3
+	return enzyme_part
 
 
 def parse_gff(annotation_file, target):
@@ -411,22 +441,27 @@ def run_RE(enzyme):
 		global args
 		global genome
 		global genome_name
+
 		results = open("output/"+enzyme+".out", "w+")
 		results.write(enzyme+"\t")
+
+		
 		## if double digest
 		if args.p == 'ddrad':
 			enzyme1, enzyme2 = enzyme.split()
-			p5,p3 = restriction_sites(enzyme1,parsed['db'])
+			enzyme_regex1 = parsed['db'][enzyme1]
+			p5, p3 = enzyme_regex1.split("|")
 		else:
-			p5,p3 = restriction_sites(enzyme,parsed['db'])
+			enzyme_regex = parsed['db'][enzyme]
+			p5, p3 = enzyme_regex.split("|")
 
-		fragments = digest(genome, p5, p3,0)
+		fragments = digest(genome, p5, p3, 0)
 		results.write(str(len(fragments))+"\t")
 		## if double digest
 		frag_select = []
 		if args.p == 'ddrad':
-			p5_2, p3_2 = restriction_sites(enzyme2,parsed['db'])
-			# dig_frag = [item[0] for item in fragments]
+			enzyme_regex2 = parsed['db'][enzyme2]
+			p5_2, p3_2 = enzyme_regex2.split("|")
 			fragments = dd_digest(fragments,p5_2,p3_2,p5,p3)
 			frag_select = select_size(fragments,int(args.min), int(args.max),args.p)
 
@@ -434,7 +469,6 @@ def run_RE(enzyme):
 		else:
 			frag_select = select_size(fragments,int(args.min), int(args.max),args.p)
 			frag_select = shear_frag(frag_select,int(args.max))
-
 		coverage = cov_sel(frag_select, len(genome))
 		results.write(str(len(frag_select))+"\t")
 		results.write("%.3f\t" % (coverage*100))
@@ -706,7 +740,7 @@ if __name__ == '__main__':
 	# parse the RE file then call run_genome
 	if (args.re != None and len(args.re) > 0 and args.p == 'orig'):
 		try:
-			REs  = parse_REinput(args.re)
+			REs  = parse_REinput(args.re,parsed['db'])
 			run_genome(REs, genome)
 		except (OSError, IOError) as e:
 			print("Restriction enzyme list file is invalid or not found")
@@ -716,7 +750,7 @@ if __name__ == '__main__':
 	## parse the RE file then call run_genome
 	elif (args.re != None and len(args.re) > 0 and args.p == 'ddrad'):
 		try:
-			REs  = parse_REinput(args.re)
+			REs  = parse_REinput(args.re,parsed['db'])
 			run_genome(REs, genome)
 		except (OSError, IOError) as e:
 			print("Restriction enzyme list file is invalid or not found")
