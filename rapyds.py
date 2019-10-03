@@ -59,7 +59,7 @@ def generate_gc(gc_freq, genome_size):
 	output.close()
 
 
-def digest(genome, p5, p3,start):
+def digest(genome, p5, p3, start):
 	"""
 		simulates the digestion process of the restriction enzymes.
 		It cuts the given genome sequence with the also given p5 and p3 sites then returns a list of fragments.
@@ -99,15 +99,15 @@ def digest(genome, p5, p3,start):
 	## append last fragment to list
 	len_genome = start + len(genome)
 	temp_frag = []
-	temp_frag.append(fragments[len(fragments)-1])
-	temp_frag.append(len_genome-len(fragments[len(fragments)-1]))
+	temp_frag.append(fragments[-1])
+	temp_frag.append(len_genome-len(fragments[-1]))
 	temp_frag.append(len_genome-1)
 	new_fragments.append(temp_frag)
 
 	# per item in new_fragments
 	# [0] fragment sequence
-	# [1] fragment start location (in bp)
-	# [2] fragment end location (in bp)
+	# [1] fragment start location (in bp start from 0)
+	# [2] fragment end location (in bp start from 0)
 	return new_fragments
 
 def cov_sel (fragments, len_genome):
@@ -118,8 +118,9 @@ def cov_sel (fragments, len_genome):
 	ratio_frag  = []
 
 	for frag in fragments:
-		len_frag = frag[2] - frag[1]
-		ratio_frag.append(len_frag)
+		# len_frag = frag[2] - frag[1]
+		# ratio_frag.append(len_frag)
+		ratio_frag.append(len(frag[0]))
 
 	cov_sel = float(sum(ratio_frag)) / len_genome
 
@@ -138,7 +139,7 @@ def shear_frag(fragments, shear_len):
 		temp_frag_end = []
 		temp_start = frag[1]
 		temp_end = frag[2]
-		frag_size = frag[2] - frag[1] + 1
+		frag_size = len(frag[0])
 		#if (frag_size > shear_len*2):
 		
 		temp_frag_start = frag[0][:shear_len]
