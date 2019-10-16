@@ -197,7 +197,7 @@ def dd_digest(genome_frag, p5_2, p3_2, p5, p3):
 	dd_filt_fragments = []
 	for frag in dd_fragments:
 		N = "[GCTA]*"
-		combi = [p5+N+p3_2+"$", p5_2+N+p3+"$", p3+N+p5_2+"$", p3_2+N+p5+"$"]
+		combi = ["^"+p5+N+p3_2+"$", "^"+p5_2+N+p3+"$", "^"+p3+N+p5_2+"$", "^"+p3_2+N+p5+"$"]
 		if(re.match(combi[0],frag[0]) or re.match(combi[1],frag[0]) or re.match(combi[2],frag[0]) or re.match(combi[3],frag[0])):
 			dd_filt_fragments.append(frag)
 
@@ -456,6 +456,9 @@ def run_RE(enzyme):
 			p5, p3 = enzyme_regex.split("|")
 
 		fragments = digest(genome, p5, p3, 0)
+		
+		# CHECK ON THIS
+		print(str(len(fragments))+"\t")
 		results.write(str(len(fragments))+"\t")
 		## if double digest
 		frag_select = []
@@ -505,7 +508,7 @@ def run_RE(enzyme):
 		## running of bwa shell script
 		#print("%s %s %s"%(args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name))
 		if(args.bwaskip != True):
-			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name, args.bwa)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
+			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name, args.index)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			shellscript.wait()
 			#print(shellscript.communicate())
 			#for line in shellscript.communicate():
@@ -513,7 +516,7 @@ def run_RE(enzyme):
 			## analysing the routput of BWA
 			try:
 				# ctr = unique_repeats, unique = uniq_count, repeat = rept_count 
-				unique_repeats,uniq_count,rept_count = remove_repeat.remove_XAs(enzyme.replace(' ', '-'), genome_name,args.bwa)
+				unique_repeats,uniq_count,rept_count = remove_repeat.remove_XAs(enzyme.replace(' ', '-'), genome_name,args.index)
 			except:
 				global pool
 				pool.close()
@@ -630,11 +633,13 @@ if __name__ == '__main__':
 	global parsed
 	## argument parser
 	parser = argparse.ArgumentParser(description='RApyDS python script')
-	parser.add_argument('-i', nargs='?', help='input genome sequence file (FASTA)')
-	parser.add_argument('-db', nargs='?', default='database/re_db.txt',  help='restriction enzyme dabatase file. Format per line: SbfI,CCTGCA|GG')
-	parser.add_argument('-re', nargs='?', default='', help='file of list of restriction enzyme to be tested')
+	
+	parser.add_argument('-i', nargs='?', help='input genome sequence file (FASTA)', required=True)
 	parser.add_argument('-a', nargs='?', default='', help='annotation file for genome (GFF)')
 	parser.add_argument('-at', nargs='?', default='gene', help='what to look for in gene annotation file (ex. gene region, exon, intron, etc)')
+	
+	parser.add_argument('-db', nargs='?', default='database/re_db.txt',  help='restriction enzyme dabatase file. Format per line: SbfI,CCTGCA|GG')
+	parser.add_argument('-re', nargs='?', default='', help='file of list of restriction enzyme to be tested')
 	parser.add_argument('-min', nargs='?', default=200, help='minimum fragment size (default 200)', type=int)
 	parser.add_argument('-max', nargs='?', default=300, help='maximum fragment size (default 300)', type=int)
 	parser.add_argument('-bp', nargs='?', default=100, help='base pair read length for FASTQ generation (default 100)', type=int)
@@ -643,9 +648,11 @@ if __name__ == '__main__':
 	parser.add_argument('-dna', nargs='?', help='input dna estimated length')
 	parser.add_argument('-o', nargs='?', default='report', help='output file name')
 	parser.add_argument('-t', nargs='?', default='16', help='number of processes (default 4)')
-	parser.add_argument('-bwa', help='clean BWA files after running')
+
+	parser.add_argument('-index', help='path for BWA indexing')
+	parser.add_argument('--bwaskip', help='Skip BWA indexing and alignment', action='store_true')
+	
 	parser.add_argument('--clean', help='clean files after running', action='store_true')
-	parser.add_argument('--bwaskip', help='Skip bwa indexing', action='store_true')
 
 	args = parser.parse_args()
 
@@ -672,7 +679,7 @@ if __name__ == '__main__':
 		print("Choose only one input source")
 		raise SystemExit
 	if (args.i == None or len(args.i)==0) and (args.gc == None and args.dna == None):
-		print("Sequence file / Input not provided")
+		print("Sequence file / Input is not provided")
 		raise SystemExit
 
 	## try to open the RE DB file, catch errors found
@@ -721,15 +728,17 @@ if __name__ == '__main__':
 			input_i.close()
 
 			if(args.bwaskip != True):
-				if(args.bwa == None):
-					args.bwa = "bwa"
-					if(os.path.exists(args.bwa)):
-						shutil.rmtree(args.bwa)
-					os.makedirs(args.bwa)
-				shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (args.i, args.i.split("/")[-1], args.bwa)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
+				if(args.index == None):
+					args.index = "bwa"
+					if(os.path.exists(args.index)):
+						shutil.rmtree(args.index)
+					os.makedirs(args.index)
+				shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (args.i, args.i.split("/")[-1], args.index)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			genome = parse_input(args.i)
+
 			if(args.bwaskip != True):
-				shellscript.wait()			
+				shellscript.wait()
+
 		except (OSError, IOError) as e:
 			print("Sequence file "+args.i+" is invalid or not found")
 			raise SystemExit
@@ -780,7 +789,7 @@ if __name__ == '__main__':
 			#output, error = process.communicate()
 			shutil.rmtree("reads")
 
-		if(os.path.exists(args.bwa) == True):
-			shutil.rmtree(args.bwa)
+		if(os.path.exists(args.index) == True):
+			shutil.rmtree(args.index)
 
 	print("\n\n--- %s seconds ---" % (time.time() - start_time))
