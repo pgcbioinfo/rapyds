@@ -458,7 +458,7 @@ def run_RE(enzyme):
 		fragments = digest(genome, p5, p3, 0)
 		
 		# CHECK ON THIS
-		print(str(len(fragments))+"\t")
+		# print(str(len(fragments))+"\t")
 		results.write(str(len(fragments))+"\t")
 		## if double digest
 		frag_select = []
@@ -506,22 +506,19 @@ def run_RE(enzyme):
 		uniq_count = 0
 		rept_count = 0		
 		## running of bwa shell script
-		#print("%s %s %s"%(args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name))
 		if(args.bwaskip != True):
-			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.i.split("/")[-1],enzyme.replace(' ', '-'), genome_name, args.index)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
+			global input_type
+			global input_file_name
+			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (input_file_name,enzyme.replace(' ', '-'), genome_name, args.index)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			shellscript.wait()
-			#print(shellscript.communicate())
-			#for line in shellscript.communicate():
-			#	print(line)
 			## analysing the routput of BWA
 			try:
-				# ctr = unique_repeats, unique = uniq_count, repeat = rept_count 
 				unique_repeats,uniq_count,rept_count = remove_repeat.remove_XAs(enzyme.replace(' ', '-'), genome_name,args.index)
 			except:
 				global pool
 				pool.close()
 				pool.terminate()
-				raise Exception("Close")
+				raise Exception("Error occurred during alignment")
 				raise SystemExit
 
 		results.write(str(uniq_count)+"\t"+str(rept_count)+"\t"+str(unique_repeats)+"\t")
@@ -529,8 +526,6 @@ def run_RE(enzyme):
 		## looking for target [genes] in annotation file
 		hit_genes = 0
 		hit_genes_unique = 0
-		#print(parsed['annotation'])
-		#print(genome_name)
 		percent_genes = 0.0
 
 		try:
@@ -553,8 +548,6 @@ def run_RE(enzyme):
 		results.write("\n")
 		results.close()
 	except Exception as e:
-		#import traceback
-		#print(traceback.format_exc())
 		print("Closing pool. Error occurred in %s with enzyme %s" % (genome_name, enzyme))
 		print(e)
 		raise Exception("Closing pool. Error occurred in %s with enzyme %s" % (genome_name, enzyme),(coverage*100) )
@@ -635,6 +628,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='RApyDS python script')
 	
 	parser.add_argument('-i', nargs='?', help='input genome sequence file (FASTA)', required=True)
+	parser.add_argument('-pre', nargs='?', help='input genome sequence file (FASTA)')
 	parser.add_argument('-a', nargs='?', default='', help='annotation file for genome (GFF)')
 	parser.add_argument('-at', nargs='?', default='gene', help='what to look for in gene annotation file (ex. gene region, exon, intron, etc)')
 	
@@ -682,6 +676,17 @@ if __name__ == '__main__':
 		print("Sequence file / Input is not provided")
 		raise SystemExit
 
+	if (args.i != None and os.path.isdir(args.i)):
+		if(args.pre == None or len(args.pre) < 1):
+			print("Directory input requires a -pre argument")
+			raise SystemExit
+
+	global input_type
+	if (os.path.isdir(args.i)):
+		input_type = True
+	else:
+		input_type = False
+
 	## try to open the RE DB file, catch errors found
 	try:
 		input_DB  = open(args.db, "r+")
@@ -691,9 +696,9 @@ if __name__ == '__main__':
 		raise SystemExit
 
 	## catch errors for invalid protocol
-	if (args.p != 'orig' and args.p != 'ddrad'):
-		print("Invalid RADSeq protocol. Use 'orig' for Original RADSeq, 'ddrad' for ddRADSeq")
-		raise SystemExit
+	# if (args.p != 'orig' and args.p != 'ddrad'):
+	# 	print("Invalid RADSeq protocol. Use 'orig' for Original RADSeq, 'ddrad' for ddRADSeq")
+	# 	raise SystemExit
 
 	## require RE file if protocol is ddrad
 	if (args.p == 'ddrad'):
@@ -701,14 +706,30 @@ if __name__ == '__main__':
 			print("DDRad Protocol requires an -re argument")
 			raise SystemExit
 
+	if(args.index != None and len(args.index) > 0):
+		if(not os.path.isdir(args.index)):
+			print("Cannot find index folder %s" % (args.index))
+			raise SystemExit
+
+	## ANNOTATION PARSING
 	## if there are annotations given by user, use it (parse it)
 	if (args.a != None and len(args.a)>0):
 		try:
-			input_a  = open(args.a, "r+")
 			parsed['annotation'] = parse_gff(args.a, args.at)
 		except (OSError, IOError) as e:
 			print("Annotation file is invalid or not found")
 			raise SystemExit
+	elif (input_type and len(args.a) == 0):
+		filename = ""
+		file_ext = ['.gff', '.gff3', '.gtf']
+		for ext in file_ext:
+			if(args.pre+ext in os.listdir(args.i)):
+				filename = args.pre+ext
+		if(len(filename) > 0):
+			parsed['annotation'] = parse_gff(args.i+'/'+filename, args.at)
+
+
+	## INPUT PARSING
 
 	## if unknown genome and given gc frequency, generate genome sequence
 	if (args.gc != None and args.dna != None) and args.i == None:
@@ -723,26 +744,56 @@ if __name__ == '__main__':
 
 	## no given gc frequency or has input genome, open genome file
 	else:
-		try:
-			input_i  = open(args.i, "r+")
-			input_i.close()
+		#  input is directory
+		global input_path
+		global input_file_name
+		if(input_type):
+			filename = ""
+			file_ext = ['.fna', '.fasta', '.fa']
+			for ext in file_ext:
+				if(args.pre+ext in os.listdir(args.i)):
+					filename = args.pre+ext
+			if(len(filename) < 1):
+				print("Input file %s[%s] in directory %s/ is not found" % (args.pre, '/'.join(file_ext), args.i))
+				raise SystemExit
+			input_path = args.i+'/'+filename
+			
+		# input is file
+		else:
+			input_path = args.i
 
+		try:
+			input_i  = open(input_path, "r+")
+			input_i.close()
 			if(args.bwaskip != True):
 				if(args.index == None):
-					args.index = "bwa"
-					if(os.path.exists(args.index)):
-						shutil.rmtree(args.index)
-					os.makedirs(args.index)
-				shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (args.i, args.i.split("/")[-1], args.index)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
-			genome = parse_input(args.i)
+					bwa_path = "bwa"
+					if(input_type):
+						bwa_path = os.path.join(args.i, bwa_path)
+					if(os.path.exists(bwa_path)):
+						shutil.rmtree(bwa_path)
+					os.makedirs(bwa_path)
+					input_file_name = '.'.join(input_path.split('/')[-1].split('.')[:-1])
+					shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (input_path, input_file_name, bwa_path)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
+
+			genome = parse_input(input_path)
 
 			if(args.bwaskip != True):
-				shellscript.wait()
+				if(args.index == None or len(args.index) == 0):
+					shellscript.wait()
+					args.index = bwa_path
+				else:
+					input_file_name = '.'.join(input_path.split('/')[-1].split('.')[:-1])
+					file_ext = ['.amb', '.ann', '.bwt','.pac','.sa']
+					index_files = os.listdir(args.index)
+					for ext in file_ext:
+						if(input_file_name+ext not in index_files):
+							print("Index file %s does not exists" % (input_file_name+ext))
+							raise SystemExit
 
 		except (OSError, IOError) as e:
-			print("Sequence file "+args.i+" is invalid or not found")
+			print("Sequence file "+input_path+" is invalid or not found")
 			raise SystemExit
-
 
 
 	# if protocol is original and RE file is given
@@ -782,11 +833,6 @@ if __name__ == '__main__':
 	if(args.clean):
 		if(os.path.exists("reads") == True):
 			shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
-			## These lines 708 up to 710 are specific to analysis for G. aculateus
-			
-			#bash_copy_reads = "rm -f ../Simulated/reads && cp -R reads ../Simulated"
-			#process = subprocess.Popen(bash_copy_reads.split(), stdout=subprocess.PIPE)
-			#output, error = process.communicate()
 			shutil.rmtree("reads")
 
 		if(os.path.exists(args.index) == True):
