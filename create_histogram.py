@@ -35,6 +35,7 @@ def create_density_histogram_image(xbins,output_path,enzyme,sequence,input_json,
 		fig1, fig = plt.subplots()
 		n, bins, patches = fig.hist(cut_sites, num_bins, facecolor='blue', alpha=0.5,  edgecolor='black', linewidth=0.75)
 		fig.set_xticks(bins[::5])
+		fig.ticklabel_format(style='plain',useOffset=False)
 		plt.xlabel("Base Pairs")
 		plt.ylabel("Number of Loci")
 		plt.title(seq_name+" - "+enzyme)
