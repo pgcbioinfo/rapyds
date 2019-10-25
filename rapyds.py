@@ -187,6 +187,7 @@ def dd_digest(genome_frag, p5_2, p3_2, p5, p3):
 		function that simulate the double digestion.
 		Returns double digested fragments
 	"""
+	global parsed
 	dd_sites = 0
 	dd_fragments = [];
 	for frag in genome_frag:
@@ -195,11 +196,26 @@ def dd_digest(genome_frag, p5_2, p3_2, p5, p3):
 
 	## filter fragments AB+BA
 	dd_filt_fragments = []
+	N = "[GCTA]*"
+	RE_p5 = restriction_sites(p5,parsed['db'])
+	RE_p3 = restriction_sites(p3,parsed['db'])
+	RE_p5_2 = restriction_sites(p5_2,parsed['db'])
+	RE_p3_2 = restriction_sites(p3_2,parsed['db'])
+	combi = []
+	if(check_enzyme_ends(p5) != True or check_enzyme_ends(p3_2) != True):
+		combi.append("^"+RE_p5+N+RE_p3_2+"$")
+		combi.append("^"+RE_p3_2+N+RE_p5+"$")
+	if(check_enzyme_ends(p3) != True or check_enzyme_ends(p5_2) != True):
+		combi.append("^"+RE_p5_2+N+RE_p3+"$")
+		combi.append("^"+RE_p3+N+RE_p5_2+"$")
 	for frag in dd_fragments:
-		N = "[GCTA]*"
-		combi = ["^"+p5+N+p3_2+"$", "^"+p5_2+N+p3+"$", "^"+p3+N+p5_2+"$", "^"+p3_2+N+p5+"$"]
-		if(re.match(combi[0],frag[0]) or re.match(combi[1],frag[0]) or re.match(combi[2],frag[0]) or re.match(combi[3],frag[0])):
-			dd_filt_fragments.append(frag)
+		for combination in combi:
+			if(re.match(combination,frag[0])):
+				dd_filt_fragments.append(frag)
+		# if(re.match(combi[0],frag[0]) or re.match(combi[1],frag[0]) or re.match(combi[2],frag[0]) or re.match(combi[3],frag[0])):
+		# 	if(re.match(combi[2],frag[0])):
+		# 		print("combi1")
+		# 	dd_filt_fragments.append(frag)
 
 
 	return dd_filt_fragments
@@ -314,6 +330,17 @@ def restriction_sites(enzyme_part, list_enzymes):
 		enzyme_part = enzyme_part.replace("D", "[GAT]")
 	
 	return enzyme_part
+
+def check_enzyme_ends(enzyme_end):
+	degen_bases = "NMRWYSKHBVD"
+
+	degen_status = True
+	for base in enzyme_end:
+		if(base not in degen_bases):
+			degen_status = False
+			break
+
+	return degen_status
 
 
 def parse_gff(annotation_file, target):
