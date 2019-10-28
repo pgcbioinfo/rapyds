@@ -202,10 +202,10 @@ def dd_digest(genome_frag, p5_2, p3_2, p5, p3):
 	RE_p5_2 = restriction_sites(p5_2,parsed['db'])
 	RE_p3_2 = restriction_sites(p3_2,parsed['db'])
 	combi = []
-	if(check_enzyme_ends(p5) != True or check_enzyme_ends(p3_2) != True):
+	if(check_enzyme_ends(p5) != True and check_enzyme_ends(p3_2) != True):
 		combi.append("^"+RE_p5+N+RE_p3_2+"$")
 		combi.append("^"+RE_p3_2+N+RE_p5+"$")
-	if(check_enzyme_ends(p3) != True or check_enzyme_ends(p5_2) != True):
+	if(check_enzyme_ends(p3) != True and check_enzyme_ends(p5_2) != True):
 		combi.append("^"+RE_p5_2+N+RE_p3+"$")
 		combi.append("^"+RE_p3+N+RE_p5_2+"$")
 	for frag in dd_fragments:
