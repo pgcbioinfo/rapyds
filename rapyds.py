@@ -855,9 +855,9 @@ if __name__ == '__main__':
 
 	# clean up folders created
 	if(args.clean):
-		if(os.path.exists("reads") == True):
+		if(os.path.exists(os.path.join(args.i,"reads")) == True):
 			shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
-			shutil.rmtree("reads")
+			shutil.rmtree(os.path.join(args.i,"reads"))
 
 		if(os.path.exists(args.index) == True):
 			shutil.rmtree(args.index)
