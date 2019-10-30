@@ -1,7 +1,6 @@
 
 ## Restriction Site Associated DNA Python-Digested Simulation  (RApyDS)
 
-> still under development
 
 **RApyDS** is a python script that performs in silico digestion as an aid for choosing a restriction enzyme for RADseq. 
 
@@ -11,13 +10,12 @@
 
 
 ### Documentation
-- For the [RApyDS program overview / documentation](docs/rapyds.pdf)
 - For the [full RApyDS program technical manual](docs/rapyds_manual.pdf)
 
 ### Requirements
 
-- Python 2.7 or greater
-- numpy ( `pip install numpy` )
+- Python 3 or greater
+- pip3 installed (run: `pip3 install -r requirements.txt`)
 - BWA 0.7.12 (http://bio-bwa.sourceforge.net/)
 - Firefox (for viewing the html files)
 - Linux OS
@@ -26,26 +24,30 @@
 
 #### Arguments
 -  **-h, --help**  show this help message and exit
--  **-i [I]**      input genome sequence file (FASTA)
--  **-db [DB]**    resteriction enzyme dabatase file. Format per line: SbfI,CCTGCA|GG
--  **-re [RE]**    file of list of restriction enzyme to be tested
--  **-a [A]**      annotation file for genome (GFF)
+-  **-gc [GC]**    input gc frequency. Value must be between 0 and 1
+-  **-dna [DNA]**  input dna estimated length
+-  **-i [I]**      directory containing the input files
+-  **-pre [PRE]**  prefix of the input files (must match the file name of the sequence, annotation, and/or index files)
 -  **-at [AT]**    what to look for in gene annotation file (ex. gene region, exon, intron, etc) (default: gene)
+-  **-db [DB]**    resteriction enzyme dabatase file. Format per line: SbfI,CCTGCA|GG (default: database/re_db.txt)
+-  **-re [RE]**    file of list of restriction enzyme to be tested
 -  **-min [MIN]**  minimum fragment size (default: 200)
 -  **-max [MAX]**  maximum fragment size (default: 300)
 -  **-bp [BP]**    base pair read length for FASTQ generation (default: 100)
 -  **-p [P]**      radseq protocol: use ddrad for double digestion (default: orig)
--  **-gc [GC]**    input gc frequency. Value must be between 0 and 1
--  **-dna [DNA]**  input dna estimated length
 -  **-o [O]**      output file name (default: report)
--  **-t [T]**      number of processes (default 4)
+-  **-t [T]**      number of processes (default 16)
+
+Optional Flags:
+-  **--bwaskip**   skip BWA indexing and alignment
+-  **--clean**     clean files after running
 
 
 
 #### Common Usage
 - To use RApyDS with a given genome file (and/or corresponding annotation file)
 
-``python rapyds.py -i <input file.fasta> [-a <annotation file.gff>] [other args]``
+``python rapyds.py -i <input_directory> -pre <input_prefix> [other arguments/flags]``
 
 - To use RApyDS by generating a genome file given GC content/frequency
 
@@ -53,9 +55,9 @@
 
 
 #### Sample Run
-Given an E.Coli FASTA ``ecoli.fasta`` with annotation file ``ecoli_annotation.gff``, the RADSeq protocol is DDRad
+Given an E.Coli FASTA file ``ecoli_seq.fasta`` with annotation file ``ecoli_seq.gff`` both located inside the directory ``ecoli``, the RADSeq protocol is DDRad
 
-``python rapyds.py -i ecoli.fasta -a ecoli_annotation.gff -p ddrad``
+``python rapyds.py -i ecoli -pre ecoli_seq -p ddrad``
 
 
 #### Output
@@ -74,6 +76,7 @@ See sample output [here](docs/examples/)
 
 ### Authors
 
-**RADSeq Team** - Arielle Gabriel. Mark Mendoza. Danielle Pamulaklakin
-
+**RADSeq Team** - Arielle Gabriel. Mark Mendoza. Danielle Pamulaklakin. Francis Tablizo.
 Project for the 2018 Internship Program in Bioinformatics
+
+**IMBUE Q1** - Jobeth Domingo. Hannah Mae Magno. Marc Jermaine Pontiveros. Maria Rejane Nepacina.
