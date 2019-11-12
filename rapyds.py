@@ -10,7 +10,7 @@ rapyds.py
 
 from __future__ import print_function, with_statement
 import argparse, re, copy, operator, importlib
-import sys, time, os, shutil, subprocess
+import sys, time, os, shutil, subprocess, psutil
 import numpy as np
 import remove_repeat, tojson, create_html
 from multiprocessing import Pool, Process, Lock
@@ -804,6 +804,7 @@ if __name__ == '__main__':
 			input_i  = open(input_path, "r+")
 			input_i.close()
 			is_indexed = True
+			shellscript = ""
 			if(not args.bwaskip):
 				bwa_path = os.path.join(args.i)
 				file_ext = ['.amb', '.ann', '.bwt','.pac','.sa']
@@ -867,3 +868,5 @@ if __name__ == '__main__':
 			shutil.rmtree(args.index)
 
 	print("\n\n--- %s seconds ---" % (time.time() - start_time))
+	process = psutil.Process(os.getpid())
+	print(process.memory_info().rss)  # in bytes 
