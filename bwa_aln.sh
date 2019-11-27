@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
+# dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
+dir=$(pwd)
 #bwa alignment
 cd $dir/$4
 pwd
