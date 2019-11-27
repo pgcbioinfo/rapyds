@@ -813,6 +813,7 @@ if __name__ == '__main__':
 					if(args.pre+ext not in index_files):
 						is_indexed = False
 						shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (input_path, args.pre, bwa_path)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
+						break
 
 			genome = parse_input(input_path)
 

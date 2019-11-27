@@ -2,7 +2,7 @@
 # dir=$(cd -P -- "$(dirname -- "$0")" && pwd -P)
 dir=$(pwd)
 #bwa alignment
-cd $dir/$4
+cd "$dir/$4"
 pwd
 bwa aln $1 reads/$3_$2_read1.fastq > $3_$2_aln_sa1.sai
 bwa aln $1 reads/$3_$2_read2.fastq > $3_$2_aln_sa2.sai
