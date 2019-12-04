@@ -812,7 +812,9 @@ if __name__ == '__main__':
 				for ext in file_ext:
 					if(args.pre+ext not in index_files):
 						is_indexed = False
-						shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (input_path, args.pre, bwa_path)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
+						print("Indexing the file...")
+						print("./bwa_index.sh %s %s %s" % (filename, args.pre, bwa_path))
+						shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (filename, args.pre, bwa_path)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 						break
 
 			genome = parse_input(input_path)
@@ -820,6 +822,7 @@ if __name__ == '__main__':
 			if(not args.bwaskip):
 				if(not is_indexed):
 					shellscript.wait()
+					print("Indexing done in : %s seconds ---" % (time.time() - start_time))
 
 		except (OSError, IOError) as e:
 			print("Sequence file "+input_path+" is invalid or not found")
