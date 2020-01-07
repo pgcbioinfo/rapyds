@@ -4,8 +4,7 @@
   <script src="src/jquery.min.js"></script>
   <script src="src/jquery.dataTables.min.js"></script>
   <script src="src/semantic.min.js"></script>
-  <script src="src/d3.min.js"></script>
-  <script src="src/d3-electrophoresis.js"></script>
+  <script src="src/d3.v3.min.js"></script>
   <link rel="stylesheet" type="text/css" href="src/semantic.min.css">
   <link rel="stylesheet" type="text/css" href="src/dataTables.semanticui.min.css">
 
@@ -95,10 +94,9 @@ function myFunction() {
 var gen_name;
 var enzyme;
 
-d3.text("output/genome_names.txt").then(function(text) {
+d3.text("output/genome_names.txt", function(text) {
 
   var seq = document.getElementById("sequence");
-
 
   // array to be added
   var data = text.split('\n')
@@ -117,8 +115,6 @@ d3.text("output/genome_names.txt").then(function(text) {
       selectList.appendChild(option);
   }
 
-
-
   var selectedItem2 = sessionStorage.getItem("SelectedItem");  
   $('#mySelect2').val(selectedItem2);
   
@@ -134,11 +130,9 @@ d3.text("output/genome_names.txt").then(function(text) {
 
 });
 
-d3.text("output/RE.txt").then(function(text) {
-
+d3.text("output/RE.txt", function(text) {
 
   var re = document.getElementById("re");
-
   // array to be added
   var data = text.split('\n')
   var data_len = data.length - 1
@@ -160,32 +154,25 @@ d3.text("output/RE.txt").then(function(text) {
   var selectedItem = sessionStorage.getItem("SelectedItem");  
   $('#mySelect').val(selectedItem);
 
-  enzyme = selectedItem
-  hist_plot(gen_name, enzyme)
+  enzyme = selectedItem;
+  hist_plot(gen_name, enzyme);
 
   
   $('#mySelect').change(function() { 
       var dropVal = $(this).val();
       sessionStorage.setItem("SelectedItem", dropVal);
       hist_plot(gen_name, dropVal)
-
      
   });
 
 })
 
-
-
-
-
 let hist_plot = function(name, enzyme){
 
-d3.json("output/cut"+name+".json").then(function(data){
-  console.log("ok")
+d3.json("output/cut"+name+".json", function(data){
 
   var index = data[enzyme]
   var cut_sites = index.length - 1
-
 
   var formatCount = d3.format(",.0f");
   var barWidth = 0.5;
@@ -193,21 +180,20 @@ d3.json("output/cut"+name+".json").then(function(data){
     width = 960 - margin.left - margin.right,
     height = 150 - margin.top - margin.bottom;
 
-  var x = d3.scaleLinear()
+  var x = d3.scale.linear()
     .domain([0, index[0]])
     .range([0, width]);
 
-  var xAxis = d3.axisBottom(x)
-    // .scale(x)
-    // .orient("bottom")
+  var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
     .tickSize(-1, 0)
     .tickPadding(6); 
 
-  var zoom = d3.zoom()
-   // . x(x)
+  var zoom = d3.behavior.zoom()
+    .x(x)
     .scaleExtent([1, 50])
     .on("zoom", zoomed);
-
 
   var svg = d3.select("#try").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -215,22 +201,18 @@ d3.json("output/cut"+name+".json").then(function(data){
     .append("svg:g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
     .call(zoom)
-    
-  index.shift()
-
+  
   var bar = svg.selectAll(".bar")
-    .data(index)
-    .enter().append("g")
-    .attr("class", "bar")
-    .attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
-    
+      .data(index)
+      .enter().append("g")
+      .attr("class", "bar")
+      .attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
     
   bar.append("rect")
       .attr("x", -barWidth/2)
       .attr("width", barWidth )
       .attr("height", 90)
       .style("opacity", 0.2);
-      
 
   svg.append("g")
       .attr("class", "x axis")
@@ -241,7 +223,6 @@ d3.json("output/cut"+name+".json").then(function(data){
     .attr("class", "pane")
     .attr("width", width)
     .attr("height", height)
-   
 
   svg.append("text")             
       .attr("transform",
@@ -270,7 +251,6 @@ d3.json("output/cut"+name+".json").then(function(data){
   function zoomed() {
 
   let e = d3.event;
-  console.log(e)
   let tx = Math.min(0, Math.max(e.translate[0], width - width*e.scale));
   let ty = Math.min(0, Math.max(e.translate[1], height - height*e.scale));
   zoom.translate([tx,ty]);
@@ -282,6 +262,7 @@ d3.json("output/cut"+name+".json").then(function(data){
 });
 
 }
+
 
   </script>
   </body>

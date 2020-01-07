@@ -10,7 +10,7 @@ rapyds.py
 
 from __future__ import print_function, with_statement
 import argparse, re, copy, operator, importlib
-import sys, time, os, shutil, subprocess, psutil
+import sys, time, os, shutil, subprocess
 import numpy as np
 import remove_repeat, tojson, create_html
 from multiprocessing import Pool, Process, Lock
@@ -87,27 +87,20 @@ def digest(genome, p5, p3, start):
 
 		## Add the 5' part
 		p5_replace = [m.start() for m in re.finditer('[NMRWYSKHBVD]', p5_orig)]
-		# print(p3_replace)
+
 		for replace_index in p5_replace:
 			temp_p5 = temp_p5[:replace_index] + genome[index+replace_index] + temp_p5[replace_index+1:]
 
-		# if any(base in "[]" for base in temp_p5):
-		# 	temp_p5 = re.sub("\[.*?\]", genome[index+temp_p5.find('[')], temp_p5)
-			# print(temp_p5)
 		fragments[i] = fragments[i]+temp_p5
 		index += len(temp_p5)
 		curr_len += len(temp_p5)
 
 		## Add the 3' part
 		p3_replace = [m.start() for m in re.finditer('[NMRWYSKHBVD]', p3_orig)]
-		# print(p3_replace)
+
 		for replace_index in p3_replace:
 			temp_p3 = temp_p3[:replace_index] + genome[index+replace_index] + temp_p3[replace_index+1:]
-		# print(temp_p3)
-		# if any(base in "[]" for base in temp_p3):
-		# 	print(temp_p3)
-		# 	temp_p3 = re.sub("\[.*?\]", genome[index+temp_p3.find('[')], temp_p3)
-		# 	print(temp_p3)
+
 		fragments[i+1] = temp_p3+fragments[i+1]
 		temp_frag.append(fragments[i])
 		temp_frag.append(temp_start)
@@ -158,7 +151,6 @@ def shear_frag(fragments, shear_len):
 		temp_start = frag[1]
 		temp_end = frag[2]
 		frag_size = len(frag[0])
-		#if (frag_size > shear_len*2):
 		
 		temp_frag_start = frag[0][:shear_len]
 		temp_end = frag[2] - (frag_size - shear_len)
@@ -178,8 +170,6 @@ def shear_frag(fragments, shear_len):
 		temp_shear.append(frag[2])		## fragment end
 		sheared_fragments.append(temp_shear)
 
-	#shear_frag =[frag[:500] for frag in fragments]
-	#print(sheared_fragments)
 	return sheared_fragments
 
 
@@ -213,11 +203,6 @@ def dd_digest(genome_frag, p5_2, p3_2, p5, p3):
 		for combination in combi:
 			if(re.match(combination,frag[0])):
 				dd_filt_fragments.append(frag)
-		# if(re.match(combi[0],frag[0]) or re.match(combi[1],frag[0]) or re.match(combi[2],frag[0]) or re.match(combi[3],frag[0])):
-		# 	if(re.match(combi[2],frag[0])):
-		# 		print("combi1")
-		# 	dd_filt_fragments.append(frag)
-
 
 	return dd_filt_fragments
 
@@ -254,7 +239,7 @@ def parse_enzymedb(enzyme_db_file):
 	for line in input_db:
 		line = line.strip().rstrip().split(",")		## strip strip and split
 
-		## catch 'em all errors
+		## catch in RE DB
 		if(len(line)!=2):
 			print("Error in restriction enzyme database file line no "+str(line_no))
 			raise SystemExit
@@ -333,6 +318,9 @@ def restriction_sites(enzyme_part, list_enzymes):
 	return enzyme_part
 
 def check_enzyme_ends(enzyme_end):
+	"""
+		returns true if any end of the recognition sites are composed of purely degenerated bases
+	"""
 	degen_bases = "NMRWYSKHBVD"
 
 	degen_status = True
@@ -371,17 +359,11 @@ def parse_gff(annotation_file, target):
 				seq_name = parsed_line[0]
 				if(parsed_line[2] == target):			
 					gene_location.append([int(parsed_line[3]),int(parsed_line[4])])	## add to gene_location the start and end
-	# ## exit if there are no genes parsed
-	# if(len(gene_location) == 0):
-	# 	print("Check the annotation file. Must be in GFF format or contains at least one of the features wanted.")
-	# 	raise SystemExit
-	# print(gff.keys())
 	gff[seq_name] = gene_location
 	return gff
 
 
 def compare_gene(gene_location, fragments):
-	#print("entering compare gene yay")
 	"""
 		counts how many fragments are within the target region
 		returns count of fragments within region and number of target regions hit
@@ -409,7 +391,6 @@ def compare_gene(gene_location, fragments):
 					continue
 		else:
 			break
-	#print("For loop for compare_gene ran well")
 	return match_ctr, len(set(genes_match)) ## return count and num of unique
 
 def parse_input(input_name):
@@ -439,7 +420,6 @@ def write_csv(genome_name, fragments, enzyme, len_genome):
 	"""
 		function writes the enzyme and its digested fragments' length in a csv file
 	"""
-	# try:
 	csv_file = open("output/csv_"+genome_name+".csv", "a+")
 	csv_file.write(enzyme)
 	csv_file.write("\t")
@@ -458,8 +438,7 @@ def write_csv(genome_name, fragments, enzyme, len_genome):
 	csv_file.write(join_cut)
 	csv_file.write("\n")
 	csv_file.close()
-	# except IndexError as e:
-	# 	print("Fragments probably empty {}".format(len(fragments)))
+
 def run_RE(enzyme):
 	"""
 		function that runs over the REs given a genome sequence. Performs the RADSeq process per RE
@@ -473,7 +452,6 @@ def run_RE(enzyme):
 
 		results = open("output/"+enzyme+".out", "w+")
 		results.write(enzyme+"\t")
-
 		
 		## if double digest
 		if args.p == 'ddrad':
@@ -484,11 +462,9 @@ def run_RE(enzyme):
 			enzyme_regex = parsed['db'][enzyme]
 			p5, p3 = enzyme_regex.split("|")
 
-		fragments = digest(genome, p5, p3, 0)
-		
-		# CHECK ON THIS
-		# print(str(len(fragments))+"\t")
+		fragments = digest(genome, p5, p3, 0)	
 		results.write(str(len(fragments))+"\t")
+
 		## if double digest
 		frag_select = []
 		if args.p == 'ddrad':
@@ -510,7 +486,6 @@ def run_RE(enzyme):
 		write_csv(genome_name, fragments, enzyme, len(genome))
 		lock.release()
 
-		#print("424 Running well... up to here")
 		if(input_type):
 			output = open(args.i+"/reads/"+genome_name+"_"+enzyme.replace(" ", "-")+"_read1.fastq", "w+")
 			output2 = open(args.i+"/reads/"+genome_name+"_"+enzyme.replace(" ", "-")+"_read2.fastq", "w+")
@@ -534,13 +509,15 @@ def run_RE(enzyme):
 
 		unique_repeats = 0
 		uniq_count = 0
-		rept_count = 0		
-		## running of bwa shell script
+		rept_count = 0	
+
+		## running of bwa alignment shell script
 		if(args.bwaskip != True and input_type):
 			global input_file_name
 			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.pre,enzyme.replace(' ', '-'), genome_name, args.i)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			shellscript.wait()
-			## analysing the routput of BWA
+
+			## analysing the output of BWA
 			try:
 				unique_repeats,uniq_count,rept_count = remove_repeat.remove_XAs(enzyme.replace(' ', '-'), genome_name,args.i)
 			except:
@@ -573,7 +550,6 @@ def run_RE(enzyme):
 		
 		results.write("%d\t%d\t%.3f" %(hit_genes,hit_genes_unique,percent_genes))
 		print("%-7s %-8d %-14d %-10.3f %-12d %-12d %-14d %-16d %-17d %5.3f" %(enzyme, len(fragments), len(frag_select), coverage*100, uniq_count, rept_count, unique_repeats, hit_genes, hit_genes_unique, percent_genes))
-		#print("%s\t%d\t%d\t%.3f\t%d\t%d\t%d\t%d\t%d\t%.3f" %(enzyme, len(fragments), len(frag_select), coverage*100, uniq_count, rept_count, unique_repeats, hit_genes, hit_genes_unique, percent_genes))
 		results.write("\n")
 		results.close()
 	except Exception as e:
@@ -644,7 +620,6 @@ def run_genome(REs,list_genomes):
 		## convert the fragment data to json format then delete csv file after
 		importlib.import_module("tojson")
 		tojson.convert_json(genome_name)
-		#os.remove("output/csv_"+genome_name+".csv")
 
 	genome_name_file.close()
 
@@ -740,21 +715,6 @@ if __name__ == '__main__':
 	if(os.path.exists("output") == True):
 		shutil.rmtree("output")
 	os.makedirs("output")
-
-	# if(args.index != None and len(args.index) > 0):
-	# 	if(not os.path.isdir(args.index)):
-	# 		print("Cannot find index folder %s" % (args.index))
-	# 		raise SystemExit
-
-	## ANNOTATION PARSING
-	## if there are annotations given by user, use it (parse it)
-	# if (args.a != None and len(args.a)>0):
-	# 	try:
-	# 		parsed['annotation'] = parse_gff(args.a, args.at)
-	# 	except (OSError, IOError) as e:
-	# 		print("Annotation file is invalid or not found")
-	# 		raise SystemExit
-	# elif (input_type and len(args.a) == 0):
 
 	if(input_type):
 		filename = ""
@@ -872,5 +832,3 @@ if __name__ == '__main__':
 			shutil.rmtree(args.index)
 
 	print("\n\n--- %s seconds ---" % (time.time() - start_time))
-	process = psutil.Process(os.getpid())
-	print(process.memory_info().rss)  # in bytes 

@@ -5,4 +5,4 @@ dir=$(pwd)
 # rm -rf $dir/$3
 # mkdir $dir/$3
 cd "$dir/$3"
-hpc pgcbioinfo/bwa bwa index -p $2 $1 > aegypti.log
+hpc pgcbioinfo/bwa bwa index -p $2 $1
