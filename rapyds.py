@@ -576,7 +576,7 @@ def run_genome(REs,list_genomes):
 		genome = list_genomes[i][1]
 		print("FASTA: "+list_genomes[i][0][1:])
 		#print("Name \tRE sites\tFrags filtered\tUnique Reads\tRepeat Reads\tUnique Repeats\tMatches in annotation")
-		print("%-7s %-8s %-14s %-10s %-12s %-12s %-14s %-16s %-17s %-5s"%('Name', 'RE sites', 'Frags filtered', 'Coverage%', 'Unique Reads', 'Repeat Reads', 'Unique Repeats', 'Reads w/in Annot', 'Reads Hit Annot', 'Annot Cov (%)'))
+		print("%-7s %-8s %-14s %-10s %-12s %-12s %-14s %-16s %-17s %-5s"%('Restriction Enzyme/s', '#Frags after Digestion', '#Frags filtered', 'Breadth Coverage%', 'Single-copy RAD Loci', 'Repetitive RAD Loci', 'Repeat regions with RAD Loci', 'RAD Loci in Specified feature', 'Specified feature in RAD Loci', '% Specified feature with RAD Loci'))
 		
 		genome_name = list_genomes[i][0].split(' ')[0][1:]
 		genome_name_file.write(list_genomes[i][0].split(',')[0][1:]+"\n")
