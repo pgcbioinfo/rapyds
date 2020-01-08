@@ -21,6 +21,9 @@ def remove_XAs(enzyme, genome_name,bwa_dir):
 			total = 0
 			unique = 0
 			repeat = 0
+			unique_frag_num = []
+			repeat_frag_num = []
+			done_frag_num = []
 			# Check through lines of sam file
 			for line in orig:
 				# Get the LN part of sam file
@@ -30,10 +33,11 @@ def remove_XAs(enzyme, genome_name,bwa_dir):
 					continue
 
 				line = line.strip().rstrip().split("\t")
-				frag_name = line[0].split("_")
+				frag_name_split = line[0].split("_")
+				frag_number = frag_name_split[1]
 				## all fragments's start and end are in this list fragments
-				fragments.append([int(frag_name[2]),int(frag_name[3])])
-				
+				fragments.append([int(frag_name_split[2]),int(frag_name_split[3])])
+
 				
 				## get all XAs
 				if(len(line) > 21):
@@ -44,9 +48,21 @@ def remove_XAs(enzyme, genome_name,bwa_dir):
 						XAs.append(int(alt[1]))
 				for x in line:
 					if x=="XT:A:U" in line[11]:
-						unique += 1
+						if frag_number not in done_frag_num:
+							unique_frag_num.append(frag_number)
+							done_frag_num.append(frag_number)
+						else:
+							unique += 1
 					elif x=="XT:A:R" in line[11]:
-						repeat += 1
+						if frag_number not in done_frag_num:
+							repeat_frag_num.append(frag_number)
+							done_frag_num.append(frag_number)
+						else:
+							if frag_number in repeat_frag_num:
+								repeat += 1
+							else:
+								unique +=1
+
 		except Exception as e:
 			print("Error occured in remove_repeat {}".format(e))	
 	set_XAs = set(XAs) ## remove duplicates XAs
@@ -54,7 +70,7 @@ def remove_XAs(enzyme, genome_name,bwa_dir):
 	ctr = 0
 	for XA in set_XAs:
 		if(XA < 0):
-			XA += total
+			continue
 		for i in range(len(fragments)):
 			if(fragments[i][0] > XA):
 				break
