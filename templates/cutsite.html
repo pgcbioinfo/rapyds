@@ -22,32 +22,29 @@
     margin: 0 10px;
   }
   bar rect {
-  fill: black;
-  shape-rendering: crispEdges;
+    fill: black;
+    shape-rendering: crispEdges;
   }
-
   .axis path, .axis line {
     fill: none;
     stroke: #000;
     shape-rendering: crispEdges;
   }
-
+  .content{
+    text-align: center;
+  }
   svg {
     font-size: 12px;
     position: relative;
     margin-top: 50px;
     margin-bottom: 50px;
-    
-    }
-
-    g {
+  }
+  g {
     overflow: visible;
-    }
-
-   text {
+  }
+  text {
     z-index: 20;
   }
-
   rect.pane {
     cursor: move;
     fill: none;
@@ -59,40 +56,38 @@
 <body>
 
   <div class="ui fixed inverted menu">
-    <div class="ui container">
-      <div class="header item">
-        RApyDS Report
-      </div>
-      <a href="index.html" class="item">Overview</a>
-      <a href="gel.html" class="item">Electrophoresis</a>
-      <a href="cutsite.html" class="item">Cut Site Distribution</a>
+  <div class="ui container">
+    <div class="header item">
+      RApyDS Report
     </div>
+    <a href="index.html" class="item">Overview</a>
+    <a href="gel.html" class="item">Electrophoresis</a>
+    <a href="cutsite.html" class="item">Cut Site Distribution</a>
+  </div>
   </div>
   <div class="ui main container">
-    <div class="ui grid">
-    
-      <div id="sequence" class="center">Sequence: </div>
+  <div class="ui grid centered">
+    <div id="sequence" class="center">Sequence: </div>
     <div id="re" class ="center2">Enzyme: </div>
-    <div> <button onclick="myFunction()">Reload Page</button> </div>
+    <div> <button onclick="reloadFX()">Reload Page</button> </div>
 
-        <div class="sixteen wide column" id="try">
-        </div>
-        
-      </div>
+    <div class="ui sixteen wide column centered content">
+      <div class="column" id="barcode"></div>
+      <div class="column" id="density"></div>
     </div>
+    
     </div>
   </div>
-
 
 <script type="text/javascript">
 
-   
-function myFunction() {
-    location.reload();
-}
-
 var gen_name;
 var enzyme;
+
+function reloadFX() {
+  sessionStorage.clear();
+  location.reload();
+}
 
 d3.text("output/genome_names.txt", function(text) {
 
@@ -101,31 +96,27 @@ d3.text("output/genome_names.txt", function(text) {
   // array to be added
   var data = text.split('\n')
   var data_len = data.length - 1
-  
-  //Create and append select list
-  var selectList = document.createElement("select");
-  selectList.setAttribute("id", "mySelect2");
-  seq.appendChild(selectList);
 
- //Create and append the options
+  //Create and append select list
+  var seqList = document.createElement("select");
+  seqList.setAttribute("id", "selectedseq");
+  seq.appendChild(seqList);
+
+  //Create and append the options
   for (var i = 0; i < data.length; i++) {
-      var option = document.createElement("option");
-      option.setAttribute("value", data[i]);
-      option.text = data[i];
-      selectList.appendChild(option);
+    var option = document.createElement("option");
+    option.setAttribute("value", data[i]);
+    option.text = data[i];
+    seqList.appendChild(option);
   }
 
-  var selectedItem2 = sessionStorage.getItem("SelectedItem");  
-  $('#mySelect2').val(selectedItem2);
-  
-  var name = selectedItem2.split(' ')
-  gen_name = name[0]
+  var sequence_select = sessionStorage.getItem("SelectedSequence");  
+  $('#selectedseq').val(sequence_select);
 
-
-  $('#mySelect2').change(function() { 
-      var dropVal2 = $(this).val();
-      sessionStorage.setItem("SelectedItem", dropVal2);
-      location.reload();
+  $('#selectedseq').change(function() { 
+    var seqVal = $(this).val();
+    sessionStorage.setItem("SelectedSequence", seqVal);
+    location.reload();
   });
 
 });
@@ -136,134 +127,150 @@ d3.text("output/RE.txt", function(text) {
   // array to be added
   var data = text.split('\n')
   var data_len = data.length - 1
-  
-  //Create and append select list
-  var selectList = document.createElement("select");
-  selectList.setAttribute("id", "mySelect");
-  re.appendChild(selectList);
 
- //Create and append the options
+  //Create and append select list
+  var reList = document.createElement("select");
+  reList.setAttribute("id", "selectedre");
+  re.appendChild(reList);
+
+  //Create and append the options
   for (var i = 0; i < data.length; i++) {
     var option = document.createElement("option");
     option.setAttribute("value", data[i]);
     option.text = data[i];
-    selectList.appendChild(option);
+    reList.appendChild(option);
   }
 
+  var SelectedRE = sessionStorage.getItem("SelectedRE");  
+  $('#selectedre').val(SelectedRE);
 
-  var selectedItem = sessionStorage.getItem("SelectedItem");  
-  $('#mySelect').val(selectedItem);
-
-  enzyme = selectedItem;
-  hist_plot(gen_name, enzyme);
-
-  
-  $('#mySelect').change(function() { 
-      var dropVal = $(this).val();
-      sessionStorage.setItem("SelectedItem", dropVal);
-      hist_plot(gen_name, dropVal)
-     
+  $('#selectedre').change(function() { 
+    console.log("Changed RE");
+    var reVal = $(this).val();
+    gen_name  = sessionStorage.getItem("SelectedSequence");
+    sessionStorage.setItem("SelectedRE", reVal);
+    hist_plot(gen_name, reVal);
+    dens_plot(gen_name,reVal);
   });
 
 })
 
 let hist_plot = function(name, enzyme){
+  name = name.split(' ')[0]
+  console.log(name)
+  console.log(enzyme)
 
-d3.json("output/cut"+name+".json", function(data){
+  d3.json("output/cut"+name+".json", function(data){
+    var index = data[enzyme]
+    var cut_sites = index.length - 1
 
-  var index = data[enzyme]
-  var cut_sites = index.length - 1
-
-  var formatCount = d3.format(",.0f");
-  var barWidth = 0.5;
-  var margin = {top: 25, right: 30, bottom: 30, left: 30},
+    var formatCount = d3.format(",.0f");
+    var barWidth = 0.5;
+    var margin = {top: 25, right: 30, bottom: 30, left: 30},
     width = 960 - margin.left - margin.right,
     height = 150 - margin.top - margin.bottom;
 
-  var x = d3.scale.linear()
-    .domain([0, index[0]])
-    .range([0, width]);
+    var x = d3.scale.linear()
+            .domain([0, index[0]])
+            .range([0, width]);
 
-  var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom")
-    .tickSize(-1, 0)
-    .tickPadding(6); 
+    var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom")
+            .tickSize(-1, 0)
+            .tickPadding(6); 
 
-  var zoom = d3.behavior.zoom()
-    .x(x)
-    .scaleExtent([1, 50])
-    .on("zoom", zoomed);
+    var zoom = d3.behavior.zoom()
+              .x(x)
+              .scaleExtent([1, 50])
+              .on("zoom", zoomed);
 
-  var svg = d3.select("#try").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("svg:g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-    .call(zoom)
-  
-  var bar = svg.selectAll(".bar")
-      .data(index)
-      .enter().append("g")
-      .attr("class", "bar")
-      .attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
-    
-  bar.append("rect")
+    var svg = d3.select("#barcode")
+          .html("")
+          .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("svg:g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+          .call(zoom)
+
+    var bar = svg.selectAll(".bar")
+          .data(index)
+          .enter().append("g")
+          .attr("class", "bar")
+          .attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
+
+    bar.append("rect")
       .attr("x", -barWidth/2)
       .attr("width", barWidth )
       .attr("height", 90)
       .style("opacity", 0.2);
 
-  svg.append("g")
+    svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis);
 
-  svg.append("svg:rect")
-    .attr("class", "pane")
-    .attr("width", width)
-    .attr("height", height)
+    svg.append("svg:rect")
+      .attr("class", "pane")
+      .attr("width", width)
+      .attr("height", height)
 
-  svg.append("text")             
+    svg.append("text")             
       .attr("transform",
-            "translate(" + (width/2) + " ," + 
-                           (height + margin.top + 0) + ")")
+      "translate(" + (width/2) + " ," + 
+      (height + margin.top + 0) + ")")
       .style("text-anchor", "middle")
       .text("Length of Genome");
 
-   svg.append("text")             
+    svg.append("text")             
       .attr("transform",
-            "translate(" + (width/2) + " ," + 
-                           (height + margin.top + -130) + ")")
+      "translate(" + (width/2) + " ," + 
+      (height + margin.top + -130) + ")")
       .style("text-anchor", "middle")
       .style("font-size", "20px")
       .text(enzyme+"    ("+cut_sites+" cut sites)");
 
-  svg.append("text")             
+    svg.append("text")             
       .attr("transform",
-            "translate(" + (width/2) + " ," + 
-                           -10 + ")")
+      "translate(" + (width/2) + " ," + 
+      -10 + ")")
       .style("text-anchor", "middle")
       .style("font-size", "20px")
       .text(enzyme+"    ("+cut_sites+" cut sites)");
 
 
-  function zoomed() {
+    function zoomed() {
 
-  let e = d3.event;
-  let tx = Math.min(0, Math.max(e.translate[0], width - width*e.scale));
-  let ty = Math.min(0, Math.max(e.translate[1], height - height*e.scale));
-  zoom.translate([tx,ty]);
+    let e = d3.event;
+    let tx = Math.min(0, Math.max(e.translate[0], width - width*e.scale));
+    let ty = Math.min(0, Math.max(e.translate[1], height - height*e.scale));
+    zoom.translate([tx,ty]);
 
-  svg.select(".x.axis").call(xAxis);
-  bar.attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
+    svg.select(".x.axis").call(xAxis);
+    bar.attr("transform", function(d) { return "translate(" + x(d) + ",0)"; })
+    }
+
   }
+);
+}
 
-});
+let dens_plot = function(name, enzyme){
+  name = name.split(' ')[0]
+  // var elem_img = document.createElement("img");
+  elem_img = "output/images/"+name+"_"+enzyme+".png"
+  // document.getElementById("density").innerHTML = elem_img;
+
+  var svg = d3.select("#density")
+        .html("")
+        .append("svg")
+        .append('image')
+          .attr('xlink:href', elem_img)
+          .attr('width', 640)
+          .attr('height', 480)
 
 }
 
-
-  </script>
-  </body>
+</script>
+</body>
 </html>

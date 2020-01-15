@@ -1,6 +1,9 @@
+#!/usr/bin/python
+
 """
 RApyDS
-Restriction Site Associated DNA Python-Digested Simulation
+Restriction site-associated DNA from Python-implemented Digestion Simulations
+https://github.com/pgcbioinfo/rapyds
 
 create_html.py
 """
@@ -162,11 +165,8 @@ def create_report(output_name):
 	shutil.move('index.html', output_name)
 	shutil.move('gel.html', output_name)
 	shutil.move('cutsite.html', output_name)
-	# shutil.move('density.html', output_name)
-	# shutil.move('density2.html', output_name)
 
 	shutil.copytree('output', output_name+'/output/')
-	# shutil.copytree('output/images', output_name+'/output/images/')
 	shutil.copytree('src', output_name+'/src')
 
 	## make the zip file then do cleanup

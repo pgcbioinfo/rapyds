@@ -1,6 +1,9 @@
+#!/usr/bin/python
+
 """
 RApyDS
-Restriction Site Associated DNA Python-Digested Simulation
+Restriction site-associated DNA from Python-implemented Digestion Simulations
+https://github.com/pgcbioinfo/rapyds
 
 remove_repeat.py
 """

@@ -2,11 +2,11 @@
 
 """
 RApyDS
-Restriction Site Associated DNA Python-Digested Simulation 
+Restriction site-associated DNA from Python-implemented Digestion Simulations
+https://github.com/pgcbioinfo/rapyds
 
 create_histogram.py
 """
-
 
 from __future__ import print_function
 import shutil, os, errno, sys
@@ -26,11 +26,12 @@ def create_density_histogram_image(xbins,output_path,enzyme,sequence,input_json,
 		seq_len = data[enzyme][0]
 		cut_sites = data[enzyme][1:]
 
-		if(args.nbin):
-			num_bins = np.arange(0,seq_len+1,float(seq_len)/xbins)
-		else:
-			num_bins = [x for x in range(0,seq_len+1,xbins)]
-			num_bins.append(xbins*((seq_len/xbins)+1))
+		num_bins = np.arange(0,seq_len+1,float(seq_len)/xbins)
+		# if(args.nbin):
+		# # 	num_bins = np.arange(0,seq_len+1,float(seq_len)/xbins)
+		# # else:
+		# num_bins = [x for x in range(0,seq_len+1,xbins)]
+		# num_bins.append(xbins*((seq_len/xbins)+1))
 
 		fig1, fig = plt.subplots()
 		n, bins, patches = fig.hist(cut_sites, num_bins, facecolor='blue', alpha=0.5,  edgecolor='black', linewidth=0.75)
@@ -63,7 +64,7 @@ def create_density_histograms(bins,output_dir,input_path):
 	print("=======================")
 
 	## clean up and making directories
-	output_path = output_dir + "/images/density"
+	output_path = output_dir + "/images/"
 	if(os.path.exists(output_path) == True):
 		shutil.rmtree(output_path)
 	os.makedirs(output_path)
@@ -89,7 +90,7 @@ def create_density_histograms(bins,output_dir,input_path):
 
 			for enzyme in renzymes:
 				jsonfile = input_path+"/cut"+sequence_name+".json"
-				create_density_histogram_image(bins,output_dir+"/images/density/",enzyme,sequence_name,jsonfile,line)
+				create_density_histogram_image(bins,output_dir+"/images/",enzyme,sequence_name,jsonfile,line)
 
 
 def create_density_histograms(bins,output_dir,input_path):
@@ -98,7 +99,7 @@ def create_density_histograms(bins,output_dir,input_path):
 	print("=======================")
 
 	## clean up and making directories
-	output_path = output_dir + "/images/density"
+	output_path = output_dir + "/images/"
 	if(os.path.exists(output_path) == True):
 		shutil.rmtree(output_path)
 	os.makedirs(output_path)
@@ -124,7 +125,7 @@ def create_density_histograms(bins,output_dir,input_path):
 
 			for enzyme in renzymes:
 				jsonfile = input_path+"/cut"+sequence_name+".json"
-				create_density_histogram_image(bins,output_dir+"/images/density/",enzyme,sequence_name,jsonfile,line)
+				create_density_histogram_image(bins,output_dir+"/images/",enzyme,sequence_name,jsonfile,line)
 
 
 if __name__ == '__main__':

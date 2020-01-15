@@ -2,7 +2,8 @@
 
 """
 RApyDS
-Restriction Site Associated DNA Python-Digested Simulation 
+Restriction site-associated DNA from Python-implemented Digestion Simulations
+https://github.com/pgcbioinfo/rapyds
 
 rapyds.py
 """
@@ -12,7 +13,7 @@ from __future__ import print_function, with_statement
 import argparse, re, copy, operator, importlib
 import sys, time, os, shutil, subprocess
 import numpy as np
-import remove_repeat, tojson, create_html
+import remove_repeat, tojson, create_html, create_histogram
 from multiprocessing import Pool, Process, Lock
 from multiprocessing.pool import ThreadPool
 pool = Pool(32)
@@ -814,18 +815,19 @@ if __name__ == '__main__':
 		run_genome(sorted(parsed['db'].keys()), genome)
 
 
+	print("Creating histogram plots and output files...")
 	## creating output files
-	# importlib.import_module("create_histogram")
-	# create_histogram.create_histograms(20,"output","output")
+	importlib.import_module("create_histogram")
+	create_histogram.create_density_histograms(20,"output","output")
 
 	importlib.import_module("create_html")
 	create_html.create_report("report/"+args.o)
-
+	print("Done")
 
 	# clean up folders created
 	if(args.clean):
 		if(os.path.exists(os.path.join(args.i,"reads")) == True):
-			shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
+			# shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
 			shutil.rmtree(os.path.join(args.i,"reads"))
 
 		if(os.path.exists(args.index) == True):

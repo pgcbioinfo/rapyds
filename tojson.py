@@ -1,9 +1,13 @@
+#!/usr/bin/python
+
 """
 RApyDS
-Restriction Site Associated DNA Python-Digested Simulation
+Restriction site-associated DNA from Python-implemented Digestion Simulations
+https://github.com/pgcbioinfo/rapyds
 
-to_json.py
+tojson.py
 """
+
 import io, json
 
 def convert_json(genome_name):
