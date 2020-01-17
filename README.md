@@ -2,9 +2,9 @@
 ## Restriction Site Associated DNA Python-Digested Simulation  (RApyDS)
 
 
-**RApyDS** is a python script that performs in silico digestion as an aid for choosing a restriction enzyme for RADseq. 
+**RApyDS** is a python script that performs in silico digestion as an aid for choosing a restriction enzyme for RADseq experiments. 
 
-**RApyDS** can perform in silico digestion of a given genome or known gc content. It can simulate single-enzyme or double-enzyme digestion on a single file or multiple FASTA files. After digestion, the program can match fragments to a given gene annotation file and run alignment analysis to check for unique and repeat regions.
+**RApyDS** can perform in silico digestion of a given genome/sequence or gc content. It can simulate single-enzyme or double-enzyme digestion on a single file or multiple FASTA files. After digestion, the program can match fragments to a given an annotation file and run alignment analysis to check for unique and repeat regions.
 
 **RApyDS** provides a detailed report and visualization of the simulated digestion. 
 
@@ -57,16 +57,16 @@ Optional Flags:
 #### Sample Run
 Given an E.Coli FASTA file ``ecoli_seq.fasta`` with annotation file ``ecoli_seq.gff`` both located inside the directory ``ecoli``, the RADSeq protocol is DDRad
 
-``python rapyds.py -i ecoli -pre ecoli_seq -p ddrad``
+``python rapyds.py -i ecoli -pre ecoli_seq -p ddrad -re enzyme/dd_re.txt``
 
 
 #### Output
 
 The output files of the program is a zip file named after the ``-o`` argument or by default, the ``report.zip``.
 Inside the archive are 3 html files containing:
-- Overview (``index.html``) - summary of the fragments' data
-- Electrophoresis (``gel.html``) - electrophoresis simulation comparing a genome and choice of up to 5 restriction enzyme
-- Cut Site Distribution (``cutsite.html``) - zoomable images of the genome marked with cut sites by choice of enzymes
+- Overview (``index.html``) - summary of the results
+- Electrophoresis (``gel.html``) - electrophoresis simulation of up to 5 restriction enzymes of choice
+- Cut Site Distribution (``cutsite.html``) - zoomable graphic vector of cut site locations in the sequence
 
 > It is advisable open the html files using Firefox. There is an issue with Google Chrome when opening local files. Only the overview file will work fine for any browser.
 

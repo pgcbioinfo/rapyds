@@ -45,7 +45,7 @@ def create_overview():
 	file_html.write('\n\t\t\t<div class="thirteen wide stretched column">\n\t\t\t\t<div class="ui segment">\n')
 
 	header_name = '\t\t\t\t\t<div class="ui tab%s" data-tab="%s"><h2>%s</h2>\n'
-	table_header = '<table id="" class="ui celled table enzymes_table" style="width:100%">\n\t<thead>\n<tr>\n\t\t<th>Restriction Enzyme</th>\n\t\t<th>Fragments after digestion</th>\n\t\t<th>Fragments after size selction (RAD loci)</th>\n\t\t<th>Percent breadth of coverage</th>\n\t\t<th>\n<div data-tooltip="Number of RAD loci found only once in the reference sequence">Single-copy RAD loci <i class="icon small question circle"></i></div></th>\n\t\t<th><div data-tooltip="Number of RAD loci found multiple times in the reference sequence">Repetitive RAD loci<i class="icon small question circle"></i></div></th>\n\t\t<th><div data-tooltip="Number of repeat regions in the reference sequence harboring RAD loci">Repeat regions with RAD loci <i class="icon small question circle"></i></div></th>\n\t\t<th>RAD loci in specified feature</th>\n\t\t<th>ASpecified feature with RAD loci</th>\n\t\t<th>Percent specified feature with RAD loci</th></tr>\n\t</thead>\n\t<tbody>\n'
+	table_header = '<table id="" class="ui celled table enzymes_table" style="width:100%">\n\t<thead>\n<tr>\n\t\t<th>Restriction Enzyme</th>\n\t\t<th>Fragments after digestion</th>\n\t\t<th>Fragments after size selction (RAD loci)</th>\n\t\t<th>Percent breadth of coverage</th>\n\t\t<th>\n<div data-tooltip="Number of RAD loci found only once in the reference sequence">Single-copy RAD loci <i class="icon small question circle"></i></div></th>\n\t\t<th><div data-tooltip="Number of RAD loci found multiple times in the reference sequence">Repetitive RAD loci<i class="icon small question circle"></i></div></th>\n\t\t<th><div data-tooltip="Number of repeat regions in the reference sequence harboring RAD loci">Repeat regions with RAD loci <i class="icon small question circle"></i></div></th>\n\t\t<th>RAD loci in specified feature</th>\n\t\t<th>Specified feature with RAD loci</th>\n\t\t<th>Percent specified feature with RAD loci</th></tr>\n\t</thead>\n\t<tbody>\n'
 	table_def = '<td>%s</td>'
 	table_def_per = '<td>%s%%</td>'
 
@@ -139,8 +139,6 @@ def create_html_files():
 		function that creates the cutsite.html file
 	"""
 	shutil.copyfile('templates/cutsite.html', 'cutsite.html')
-	# shutil.copyfile('templates/density.html', 'density.html')
-	# shutil.copyfile('templates/density2.html', 'density2.html')
 
 
 def create_report(output_name):
@@ -165,6 +163,7 @@ def create_report(output_name):
 	shutil.move('index.html', output_name)
 	shutil.move('gel.html', output_name)
 	shutil.move('cutsite.html', output_name)
+	shutil.move('output/histogram.txt', output_name)
 
 	shutil.copytree('output', output_name+'/output/')
 	shutil.copytree('src', output_name+'/src')

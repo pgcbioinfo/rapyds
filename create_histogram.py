@@ -18,9 +18,10 @@ import os.path
 import math
 import argparse
 
-def create_density_histogram_image(xbins,output_path,enzyme,sequence,input_json, seq_name):
-	print("Sequence Name: "+seq_name)
-	print("Enzyme: "+enzyme)
+def create_density_histogram_image(xbins,output_dir,enzyme,sequence,input_json, seq_name):
+	file_open = open(output_dir+"/histogram.txt","a+")
+	file_open.write("Sequence Name: "+seq_name+"\n")
+	file_open.write("Enzyme: "+enzyme+"\n")
 	with open(input_json) as jsonfile:
 		data = json.load(jsonfile)
 		seq_len = data[enzyme][0]
@@ -41,7 +42,7 @@ def create_density_histogram_image(xbins,output_path,enzyme,sequence,input_json,
 		plt.ylabel("Number of Loci")
 		plt.title(seq_name+" - "+enzyme)
 		plt.legend(["Bin size: %d" % bins[1]])
-		file_name = output_path+sequence+"_"+enzyme+'.png'
+		file_name = output_dir+"/images/"+sequence+"_"+enzyme+'.png'
 		# file_name = file_name.replace(' ','-')
 		plt.savefig(file_name)
 		plt.cla()
@@ -50,18 +51,15 @@ def create_density_histogram_image(xbins,output_path,enzyme,sequence,input_json,
 		# printing of histogram bins
 		for i in range(0,len(num_bins)-1):
 			if(i == 0):
-				print("%d - %d \t %d" % (0,bins[i+1],n[i]))
+				file_open.write("%d - %d \t %d\n" % (0,bins[i+1],n[i]))
 			else:
-				print("%d - %d \t %d" % (bins[i]+1,bins[i+1],n[i]))
+				file_open.write("%d - %d \t %d\n" % (bins[i]+1,bins[i+1],n[i]))
 		
-		print("Saved histogram in "+file_name)
-
-	print()
+	file_open.write("\n")
+	file_open.close()
 
 def create_density_histograms(bins,output_dir,input_path):
-	print("=======================")
-	print("LOCI DENSITY")
-	print("=======================")
+	
 
 	## clean up and making directories
 	output_path = output_dir + "/images/"
@@ -83,40 +81,11 @@ def create_density_histograms(bins,output_dir,input_path):
 			line = content.strip().rstrip()
 			renzymes.append(line)
 
-	with open(input_path+"/genome_names.txt") as f:
-		for content in f:
-			line = content.strip().rstrip()
-			sequence_name = line.split(" ")[0]
-
-			for enzyme in renzymes:
-				jsonfile = input_path+"/cut"+sequence_name+".json"
-				create_density_histogram_image(bins,output_dir+"/images/",enzyme,sequence_name,jsonfile,line)
-
-
-def create_density_histograms(bins,output_dir,input_path):
-	print("=======================")
-	print("LOCI DENSITY")
-	print("=======================")
-
-	## clean up and making directories
-	output_path = output_dir + "/images/"
-	if(os.path.exists(output_path) == True):
-		shutil.rmtree(output_path)
-	os.makedirs(output_path)
-
-	if (os.path.exists(input_path+"/genome_names.txt") == False):
-		print("No genome_names.txt file in "+input_path)
-		raise SystemExit
-
-	if (os.path.exists(input_path+"/RE.txt") == False):
-		print("No RE.txt file in "+input_path)
-		raise SystemExit
-
-	renzymes = []
-	with open(input_path+"/RE.txt") as f:
-		for content in f:
-			line = content.strip().rstrip()
-			renzymes.append(line)
+	file_open = open(output_dir+"/histogram.txt","w+")
+	file_open.write("=======================\n")
+	file_open.write("LOCI DENSITY\n")
+	file_open.write("=======================\n")
+	file_open.close()
 
 	with open(input_path+"/genome_names.txt") as f:
 		for content in f:
@@ -125,7 +94,8 @@ def create_density_histograms(bins,output_dir,input_path):
 
 			for enzyme in renzymes:
 				jsonfile = input_path+"/cut"+sequence_name+".json"
-				create_density_histogram_image(bins,output_dir+"/images/",enzyme,sequence_name,jsonfile,line)
+				create_density_histogram_image(bins,output_dir,enzyme,sequence_name,jsonfile,line)
+	print("Finished creating histograms")
 
 
 if __name__ == '__main__':

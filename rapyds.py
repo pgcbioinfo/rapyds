@@ -726,7 +726,7 @@ if __name__ == '__main__':
 		if(len(filename) > 0):
 			parsed['annotation'] = parse_gff(args.i+'/'+filename, args.at)
 		else:
-			print("Annotation file is invalid or not found")
+			print("Annotation file "+args.i+'/'+args.pre+"[.gff,.gff3,.gtf] is invalid or not found")
 			raise SystemExit
 
 
@@ -829,8 +829,5 @@ if __name__ == '__main__':
 		if(os.path.exists(os.path.join(args.i,"reads")) == True):
 			# shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
 			shutil.rmtree(os.path.join(args.i,"reads"))
-
-		if(os.path.exists(args.index) == True):
-			shutil.rmtree(args.index)
 
 	print("\n\n--- %s seconds ---" % (time.time() - start_time))
