@@ -134,21 +134,24 @@ def create_gel_html():
 	file_html.write(footer)
 	file_html.close()
 
-def create_html_files():
+def create_html_files(args):
 	"""
 		function that creates the cutsite.html file
 	"""
-	shutil.copyfile('templates/cutsite.html', 'cutsite.html')
+	if(args.skip_graph):
+		shutil.copyfile('templates/cutsite-skip.html', 'cutsite.html')
+	else:
+		shutil.copyfile('templates/cutsite.html', 'cutsite.html')
 
 
-def create_report(output_name):
+def create_report(output_name, args):
 	"""
 		function that creates the report files and zips them
 	"""
 	## call the functions to create the html files
 	create_overview()
 	create_gel_html()
-	create_html_files()
+	create_html_files(args)
 
 	## create output directory
 	if(os.path.exists(output_name) == True):
@@ -162,8 +165,10 @@ def create_report(output_name):
 	## copy html files and directories src and output
 	shutil.move('index.html', output_name)
 	shutil.move('gel.html', output_name)
+
+	if(args.skip_graph != True):
+		shutil.move('output/histogram.txt', output_name)
 	shutil.move('cutsite.html', output_name)
-	shutil.move('output/histogram.txt', output_name)
 
 	shutil.copytree('output', output_name+'/output/')
 	shutil.copytree('src', output_name+'/src')

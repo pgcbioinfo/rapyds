@@ -513,7 +513,7 @@ def run_RE(enzyme):
 		rept_count = 0	
 
 		## running of bwa alignment shell script
-		if(args.bwaskip != True and input_type):
+		if(args.skip_bwa != True and input_type):
 			global input_file_name
 			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.pre,enzyme.replace(' ', '-'), genome_name, args.i)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			shellscript.wait()
@@ -649,7 +649,8 @@ if __name__ == '__main__':
 	parser.add_argument('-o', nargs='?', default='report', help='output file name')
 	parser.add_argument('-t', nargs='?', default='16', help='number of processes (default 4)')
 
-	parser.add_argument('--bwaskip', help='skip BWA indexing and alignment', action='store_true')
+	parser.add_argument('--skip_bwa', help='skip BWA indexing and alignment', action='store_true')
+	parser.add_argument('--skip_graph', help='skip cut site location histogram graphing', action='store_true')
 	parser.add_argument('--clean', help='clean files after running', action='store_true')
 
 	args = parser.parse_args()
@@ -766,7 +767,7 @@ if __name__ == '__main__':
 			input_i.close()
 			is_indexed = True
 			shellscript = ""
-			if(not args.bwaskip):
+			if(not args.skip_bwa):
 				bwa_path = os.path.join(args.i)
 				file_ext = ['.amb', '.ann', '.bwt','.pac','.sa']
 				index_files = os.listdir(args.i)
@@ -780,7 +781,7 @@ if __name__ == '__main__':
 
 			genome = parse_input(input_path)
 
-			if(not args.bwaskip):
+			if(not args.skip_bwa):
 				if(not is_indexed):
 					shellscript.wait()
 					print("Indexing done in : %s seconds ---" % (time.time() - start_time))
@@ -815,13 +816,17 @@ if __name__ == '__main__':
 		run_genome(sorted(parsed['db'].keys()), genome)
 
 
-	print("Creating histogram plots and output files...")
-	## creating output files
-	importlib.import_module("create_histogram")
-	create_histogram.create_density_histograms(20,"output","output")
+	# clean up folders created
+	if(args.skip_graph != True):
+		print("Creating histogram plots files...")
+		## creating output files
+		importlib.import_module("create_histogram")
+		create_histogram.create_density_histograms(20,"output","output")
+		print("Done")
 
+	print("Creating report files...")
 	importlib.import_module("create_html")
-	create_html.create_report("report/"+args.o)
+	create_html.create_report("report/"+args.o,args)
 	print("Done")
 
 	# clean up folders created

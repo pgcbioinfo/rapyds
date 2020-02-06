@@ -39,7 +39,8 @@
 -  **-t [T]**      number of processes (default 16)
 
 Optional Flags:
--  **--bwaskip**   skip BWA indexing and alignment
+-  **--skip_bwa**   skip BWA indexing and alignment
+-  **--skip_graph**   skip cut site location histogram graphing
 -  **--clean**     clean files after running
 
 
@@ -66,7 +67,7 @@ The output files of the program is a zip file named after the ``-o`` argument or
 Inside the archive are 3 html files containing:
 - Overview (``index.html``) - summary of the results
 - Electrophoresis (``gel.html``) - electrophoresis simulation of up to 5 restriction enzymes of choice
-- Cut Site Distribution (``cutsite.html``) - zoomable graphic vector of cut site locations in the sequence
+- Cut Site Distribution (``cutsite.html``) - zoomable graphic vector of cut site locations in the sequence (optional: histogram of the cut site locations)
 
 > It is advisable open the html files using Firefox. There is an issue with Google Chrome when opening local files. Only the overview file will work fine for any browser.
 
