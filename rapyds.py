@@ -130,8 +130,6 @@ def cov_sel (fragments, len_genome):
 	ratio_frag  = []
 
 	for frag in fragments:
-		# len_frag = frag[2] - frag[1]
-		# ratio_frag.append(len_frag)
 		ratio_frag.append(len(frag[0]))
 
 	cov_sel = float(sum(ratio_frag)) / len_genome
@@ -304,7 +302,6 @@ def restriction_sites(enzyme_part, list_enzymes):
 
 	## replace wildcard bases
 	if any(base in "NMRWYSKHBVD" for base in enzyme_part):
-		enzyme_part = enzyme_part.replace("N", "[GCAT]")
 		enzyme_part = enzyme_part.replace("M", "[CA]")
 		enzyme_part = enzyme_part.replace("R", "[GA]")
 		enzyme_part = enzyme_part.replace("W", "[AT]")
@@ -315,6 +312,7 @@ def restriction_sites(enzyme_part, list_enzymes):
 		enzyme_part = enzyme_part.replace("B", "[GCT]")
 		enzyme_part = enzyme_part.replace("V", "[GCA]")
 		enzyme_part = enzyme_part.replace("D", "[GAT]")
+		enzyme_part = enzyme_part.replace("N", "[GCAT]")
 	
 	return enzyme_part
 
@@ -630,32 +628,36 @@ if __name__ == '__main__':
 	global args
 	global parsed
 	## argument parser
-	parser = argparse.ArgumentParser(description='RApyDS python script')
+	parser = argparse.ArgumentParser(description='Restriction site-associated DNA from Python-implemented Digestion Simulations (RApyDS) - https://github.com/pgcbioinfo/rapyds')
 	
-	parser.add_argument('-gc', nargs='?', help='input gc frequency. Value must be between 0 and 1',type=float)
-	parser.add_argument('-dna', nargs='?', help='input dna estimated length',type=int)
+	group = parser.add_mutually_exclusive_group(required=True)
 
-	parser.add_argument('-i', nargs='?', help='directory containing the input files')
+	group.add_argument('-gc', nargs='?', help='input GC frequency. Value must be between 0 and 1',type=float)
+	parser.add_argument('-dna', nargs='?', help='input estimated DNA length',type=int)
+
+	group.add_argument('-i', nargs='?', help='directory containing the input files')
 	parser.add_argument('-pre', nargs='?', help='prefix of the input files (must match the file name of the sequence, annotation, and/or index files)')
 
-	parser.add_argument('-at', nargs='?', default='gene', help='what to look for in gene annotation file (ex. gene region, exon, intron, etc)')
+	parser.add_argument('-at', nargs='?', default='gene', help='target feature in annotation file (ex. gene region, exon, intron, etc)')
 	
 	parser.add_argument('-db', nargs='?', default='database/re_db.txt',  help='restriction enzyme dabatase file. Format per line: SbfI,CCTGCA|GG')
-	parser.add_argument('-re', nargs='?', default='', help='file of list of restriction enzyme to be tested')
-	parser.add_argument('-min', nargs='?', default=200, help='minimum fragment size (default 200)', type=int)
-	parser.add_argument('-max', nargs='?', default=300, help='maximum fragment size (default 300)', type=int)
-	parser.add_argument('-bp', nargs='?', default=100, help='base pair read length for FASTQ generation (default 100)', type=int)
-	parser.add_argument('-p', nargs='?', default='orig', help='radseq protocol: use ddrad for double digestion')
-	parser.add_argument('-o', nargs='?', default='report', help='output file name')
-	parser.add_argument('-t', nargs='?', default='16', help='number of processes (default 4)')
+	parser.add_argument('-re', nargs='?', default='', help='file containing the list of restriction enzyme to be tested')
+	parser.add_argument('-min', nargs='?', default=200, help='minimum fragment size (default: 200)', type=int)
+	parser.add_argument('-max', nargs='?', default=300, help='maximum fragment size (default: 300)', type=int)
+	parser.add_argument('-bp', nargs='?', default=100, help='base pair read length for mapping (default: 100)', type=int)
+	parser.add_argument('-p', nargs='?', default='orig', help='RADSeq protocol: use ddrad for double digestion')
+	parser.add_argument('-o', nargs='?', default='report', help='output report file name (default: output/report.zip)')
+	parser.add_argument('-t', nargs='?', default='16', help='number of processes (default: 16)')
 
 	parser.add_argument('--skip_bwa', help='skip BWA indexing and alignment', action='store_true')
 	parser.add_argument('--skip_graph', help='skip cut site location histogram graphing', action='store_true')
-	parser.add_argument('--clean', help='clean files after running', action='store_true')
+	parser.add_argument('--skip_clean', help='skip cleaning intermediate files after running', action='store_true')
+	parser.add_argument('--verbose', help='print verbose output including debug information', action='store_true')
 
 	args = parser.parse_args()
 
-	print(args)
+	if(args.verbose):
+		print(args)
 
 	start_time = time.time()
 
@@ -664,7 +666,6 @@ if __name__ == '__main__':
 	genome = ""
 
 	importlib.import_module("remove_repeat")
-
 
 
 	## catch errors for invalid input file argument
@@ -687,7 +688,6 @@ if __name__ == '__main__':
 			print("Must contain -dna flag")
 			raise SystemExit
 
-
 	global input_type
 	input_type = False
 	if (args.i != None and os.path.isdir(args.i)):
@@ -705,7 +705,7 @@ if __name__ == '__main__':
 	## require RE file if protocol is ddrad
 	if (args.p == 'ddrad'):
 		if(args.re == None or len(args.re) < 1):
-			print("DDRad Protocol requires an -re argument")
+			print("ddRAD Protocol requires an -re argument")
 			raise SystemExit
 
 	## clean up and making directories
@@ -816,7 +816,7 @@ if __name__ == '__main__':
 		run_genome(sorted(parsed['db'].keys()), genome)
 
 
-	# clean up folders created
+	# histogram plotting
 	if(args.skip_graph != True):
 		print("Creating histogram plots files...")
 		## creating output files
@@ -827,12 +827,15 @@ if __name__ == '__main__':
 	print("Creating report files...")
 	importlib.import_module("create_html")
 	create_html.create_report("report/"+args.o,args)
-	print("Done")
+	print("Done creating report files.")
 
 	# clean up folders created
-	if(args.clean):
+	if(args.skip_clean) != True:
 		if(os.path.exists(os.path.join(args.i,"reads")) == True):
 			# shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
 			shutil.rmtree(os.path.join(args.i,"reads"))
 
-	print("\n\n--- %s seconds ---" % (time.time() - start_time))
+	if(args.verbose):
+		print("\n\n--- %s seconds ---" % (time.time() - start_time))
+
+

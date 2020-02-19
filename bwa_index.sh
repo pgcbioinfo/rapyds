@@ -7,8 +7,9 @@
 # bwa_index.sh
 #
 
+BWA_CMD=bwa
 
 dir=$(pwd)
 #bwa alignment
 cd "$dir/$3"
-bwa index -p $2 $1
+${BWA_CMD} index -p $2 $1
