@@ -516,6 +516,7 @@ def run_RE(enzyme):
 			shellscript = subprocess.Popen(["./bwa_aln.sh %s %s %s %s" % (args.pre,enzyme.replace(' ', '-'), genome_name, args.i)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 			shellscript.wait()
 
+
 			## analysing the output of BWA
 			try:
 				unique_repeats,uniq_count,rept_count = remove_repeat.remove_XAs(enzyme.replace(' ', '-'), genome_name,args.i)
@@ -551,6 +552,16 @@ def run_RE(enzyme):
 		print("%-7s %-8d %-14d %-10.3f %-12d %-12d %-14d %-16d %-17d %5.3f" %(enzyme, len(fragments), len(frag_select), coverage*100, uniq_count, rept_count, unique_repeats, hit_genes, hit_genes_unique, percent_genes))
 		results.write("\n")
 		results.close()
+
+
+		if(args.skip_clean != True):
+			if(os.path.exists(os.path.join(args.i,'{}_{}_aln_sa1.sai'.format(genome_name, enzyme.replace(' ', '-'))))):
+				os.remove(os.path.join(args.i,'{}_{}_aln_sa1.sai'.format(genome_name, enzyme.replace(' ', '-'))))
+			if(os.path.exists(os.path.join(args.i,'{}_{}_aln_sa2.sai'.format(genome_name, enzyme.replace(' ', '-'))))):
+				os.remove(os.path.join(args.i,'{}_{}_aln_sa2.sai'.format(genome_name, enzyme.replace(' ', '-'))))
+			if(os.path.exists(os.path.join(args.i,'aligned_pairs_{}_{}.sam'.format(genome_name, enzyme.replace(' ', '-'))))):
+				os.remove(os.path.join(args.i,'aligned_pairs_{}_{}.sam'.format(genome_name, enzyme.replace(' ', '-'))))
+
 	except Exception as e:
 		print("Closing pool. Error occurred in %s with enzyme %s" % (genome_name, enzyme))
 		print(e)
@@ -645,7 +656,7 @@ if __name__ == '__main__':
 	parser.add_argument('-min', nargs='?', default=200, help='minimum fragment size (default: 200)', type=int)
 	parser.add_argument('-max', nargs='?', default=300, help='maximum fragment size (default: 300)', type=int)
 	parser.add_argument('-bp', nargs='?', default=100, help='base pair read length for mapping (default: 100)', type=int)
-	parser.add_argument('-p', nargs='?', default='orig', help='RADSeq protocol: use ddrad for double digestion')
+	parser.add_argument('-p', nargs='?', default='orig', help='RADSeq protocol: use ddrad for double digestion', choices={"orig", "ddrad"})
 	parser.add_argument('-o', nargs='?', default='report', help='output report file name (default: output/report.zip)')
 	parser.add_argument('-t', nargs='?', default='16', help='number of processes (default: 16)')
 
@@ -667,46 +678,49 @@ if __name__ == '__main__':
 
 	importlib.import_module("remove_repeat")
 
-
-	## catch errors for invalid input file argument
-	if (args.i != None and (args.gc != None or args.dna != None)):
-		print("Choose only one input source")
-		raise SystemExit
-	if (args.i == None or len(args.i)==0) and (args.gc == None and args.dna == None):
-		print("Sequence file / Input is not provided")
-		raise SystemExit
-
-	if (args.i != None and os.path.isdir(args.i)):
-		if(args.pre == None or len(args.pre) < 1):
-			print("Directory input requires a -pre argument")
-			raise SystemExit
-	if(args.gc != None or args.dna != None):
-		if(args.gc == None):
-			print("Must contain -gc flag")
-			raise SystemExit
-		if(args.dna == None):
-			print("Must contain -dna flag")
-			raise SystemExit
-
+	#### INPUT ARGUMENT PARSING
+	## try to open the RE DB file, catch errors found
 	global input_type
 	input_type = False
-	if (args.i != None and os.path.isdir(args.i)):
-		input_type = True
-	else:
-		if(args.i != None):
-			print("-i input must be a directory")
-	## try to open the RE DB file, catch errors found
 	try:
 		parsed['db'] = parse_enzymedb(args.db)
 	except (OSError, IOError) as e:
-		print("Restriction enzyme database file is invalid or not found")
+		print("ERROR: Restriction enzyme database file is invalid or not found")
 		raise SystemExit
 
 	## require RE file if protocol is ddrad
 	if (args.p == 'ddrad'):
 		if(args.re == None or len(args.re) < 1):
-			print("ddRAD Protocol requires an -re argument")
+			print("ERROR: ddRAD Protocol requires an -re argument")
 			raise SystemExit
+
+	if(args.min > args.max):
+		print("ERROR: Value for -min should be less than -max")
+		raise SystemExit
+
+	## catch errors for invalid input file argument
+	if (args.i != None and (args.gc != None or args.dna != None)):
+		print("ERROR: Choose only one input source")
+		raise SystemExit
+	if (args.i == None or len(args.i)==0) and (args.gc == None and args.dna == None):
+		print("ERROR: Sequence file / Input is not provided")
+		raise SystemExit
+
+	## input checking
+	if (args.i != None):
+		if(os.path.isdir(args.i) != True):
+			print("ERROR: Value for -i input must be a directory")
+			raise SystemExit
+		input_type = True
+		if(args.pre == None or len(args.pre) < 1):
+			print("ERROR: Directory input requires a -pre argument")
+			raise SystemExit
+
+	if(args.gc != None):
+		if(args.dna == None):
+			print("ERROR: Must contain -dna flag")
+			raise SystemExit
+
 
 	## clean up and making directories
 	if(input_type):
@@ -718,19 +732,6 @@ if __name__ == '__main__':
 		shutil.rmtree("output")
 	os.makedirs("output")
 
-	if(input_type):
-		filename = ""
-		file_ext = ['.gff', '.gff3', '.gtf']
-		for ext in file_ext:
-			if(args.pre+ext in os.listdir(args.i)):
-				filename = args.pre+ext
-		if(len(filename) > 0):
-			parsed['annotation'] = parse_gff(args.i+'/'+filename, args.at)
-		else:
-			print("Annotation file "+args.i+'/'+args.pre+"[.gff,.gff3,.gtf] is invalid or not found")
-			raise SystemExit
-
-
 	## INPUT PARSING
 	genome = ""
 	## if unknown genome and given gc frequency, generate genome sequence
@@ -741,7 +742,7 @@ if __name__ == '__main__':
 			generate_gc(gc_freq,genome_length)
 			genome = parse_input('genome.txt')
 		else:
-			print("GC frequency must be between 0 and 1")
+			print("ERROR: GC frequency must be between 0 and 1")
 			raise SystemExit
 
 	## no given gc frequency or has input genome, open the said genome file
@@ -758,7 +759,7 @@ if __name__ == '__main__':
 				input_file_name = os.path.join(args.i, args.pre+ext)
 				print(input_file_name)
 		if(len(filename) < 1):
-			print("Input file %s[%s] in directory %s/ is not found" % (args.pre, '/'.join(file_ext), args.i))
+			print("ERROR: Input file {}[{}] in directory {}/ is not found".format(args.pre, '/'.join(file_ext), args.i))
 			raise SystemExit
 		input_path = args.i+'/'+filename
 
@@ -775,7 +776,8 @@ if __name__ == '__main__':
 					if(args.pre+ext not in index_files):
 						is_indexed = False
 						print("Indexing the file...")
-						print("./bwa_index.sh %s %s %s" % (filename, args.pre, bwa_path))
+						if(args.verbose):
+							print("./bwa_index.sh %s %s %s" % (filename, args.pre, bwa_path))
 						shellscript = subprocess.Popen(["./bwa_index.sh %s %s %s" % (filename, args.pre, bwa_path)], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, close_fds=True)
 						break
 
@@ -787,9 +789,16 @@ if __name__ == '__main__':
 					print("Indexing done in : %s seconds ---" % (time.time() - start_time))
 
 		except (OSError, IOError) as e:
-			print("Sequence file "+input_path+" is invalid or not found")
+			print("ERROR: Sequence file {} is invalid or not found".format(input_path))
 			raise SystemExit
 
+		filename = ""
+		file_ext = ['.gff', '.gff3', '.gtf']
+		for ext in file_ext:
+			if(args.pre+ext in os.listdir(args.i)):
+				filename = args.pre+ext
+		if(len(filename) > 0):
+			parsed['annotation'] = parse_gff(args.i+'/'+filename, args.at)
 
 	# if protocol is original and RE file is given
 	# parse the RE file then call run_genome
@@ -798,7 +807,7 @@ if __name__ == '__main__':
 			REs  = parse_REinput(args.re,parsed['db'])
 			run_genome(REs, genome)
 		except (OSError, IOError) as e:
-			print("Restriction enzyme list file is invalid or not found")
+			print("ERROR: Restriction enzyme list file is invalid or not found")
 			raise SystemExit
 
 	## if protocol is ddrad and RE file is given
@@ -808,7 +817,7 @@ if __name__ == '__main__':
 			REs  = parse_REinput(args.re,parsed['db'])
 			run_genome(REs, genome)
 		except (OSError, IOError) as e:
-			print("Restriction enzyme list file is invalid or not found")
+			print("ERROR: Restriction enzyme list file is invalid or not found")
 			raise SystemExit
 
 	## if no RE file given, use everything in the database and protocol is original by default
@@ -832,8 +841,9 @@ if __name__ == '__main__':
 	# clean up folders created
 	if(args.skip_clean) != True:
 		if(os.path.exists(os.path.join(args.i,"reads")) == True):
-			# shutil.make_archive("reads_archive/reads_"+args.o, 'zip', "reads")
 			shutil.rmtree(os.path.join(args.i,"reads"))
+		if(os.path.exists("output") == True):
+			shutil.rmtree("output")
 
 	if(args.verbose):
 		print("\n\n--- %s seconds ---" % (time.time() - start_time))

@@ -4,7 +4,7 @@
 
 **RApyDS** is a python script that performs in silico digestion as an aid for choosing a restriction enzyme for RADseq experiments. 
 
-**RApyDS** can perform in silico digestion of a given genome/sequence or gc content. It can simulate single-enzyme or double-enzyme digestion on a single file or multiple FASTA files. After digestion, the program can match fragments to a given an annotation file and run alignment analysis to check for unique and repeat regions.
+**RApyDS** can perform in silico digestion of a given genome/sequence or gc content. It can simulate single-enzyme or double-enzyme digestion on a single file or multiple FASTA files. After digestion, the program can match fragments to a given an annotation file and run alignment analysis to check vfor unique and repeat regions.
 
 **RApyDS** provides a detailed report and visualization of the simulated digestion. 
 
@@ -35,19 +35,20 @@
 -  **-i [I]**      directory containing the input files
 -  **-pre [PRE]**  prefix of the input files (must match the file name of the sequence, annotation, and/or index files)
 -  **-at [AT]**    target feature in annotation file (ex. gene region, exon, intron, etc) (default: gene) 
--  **-db [DB]**    resteiction enzyme dabatase file. Format per line: SbfI,CCTGCA|GG (default: database/re_db.txt)
+-  **-db [DB]**    restriction enzyme dabatase file. Format per line: SbfI,CCTGCA|GG (default: database/re_db.txt)
 -  **-re [RE]**    file containing list of restriction enzyme to be tested
 -  **-min [MIN]**  minimum fragment size (default: 200)
 -  **-max [MAX]**  maximum fragment size (default: 300)
 -  **-bp [BP]**    base pair read length for mapping (default: 100)
--  **-p [P]**      RADSeq protocol: use ddrad for double digestion (default: orig)
+-  **-p [{ddrad,orig}]**      RADSeq protocol: use ddrad for double digestion (default: orig)
 -  **-o [O]**      output report file name (default: report)
--  **-t [T]**      number of processes (default 16)
+-  **-t [T]**      number of processes (default: 16)
 
 Optional Flags:
 -  **--skip_bwa**   skip BWA indexing and alignment
--  **--skip_graph**   skip cut site location histogram graphing
--  **--clean**     skip cleaning intermediate files after running
+-  **--skip_graph** skip cut site location histogram graphing
+-  **--skip_clean**	skip cleaning intermediate files after running
+-  **--verbose**	print verbose output including debug information
 
 
 
@@ -113,3 +114,5 @@ See sample output [here](docs/examples/)
 Project for the 2018 Internship Program in Bioinformatics
 
 **IMBUE Q1** - Jobeth Domingo. Hannah Mae Magno. Marc Jermaine Pontiveros. Maria Rejane Nepacina.
+
+For any issues or bugs, email <``kadgabriel``@``gmail.com``>
